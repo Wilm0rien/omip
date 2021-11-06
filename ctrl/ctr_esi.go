@@ -467,9 +467,9 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 								result := re.FindStringSubmatch(newEtag[0])
 								if len(result) > 1 {
 									obj.Esi.ETags[url] = result[1]
+									// store the new etag and delete the old etag
 									obj.Model.StoreEtag(result[1], oldEtag, bodyBytes2)
 								}
-
 							}
 						}
 						bodyBytes = bodyBytes2
