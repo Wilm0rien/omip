@@ -1,12 +1,12 @@
 # OMIP
 
-OMIP - An Eve Online Data Aggregator with focus on data security and privacy.
+OMIP - An Eve Online Data Aggregator with focus on data security and privacy
 
 ## Security Features
 
 * OMIP is a program which runs natively on your computer (Linux or Windows)
 * No data is stored outside your computer
-* Only the following servers are contacted from this tool
+* Only the following servers are contacted from this tool to fetch information
     * esi.evetech.net (for fetching ESI data)
     * github.com (for update checking)
 * ESI keys are stored in your local home directory and secured by cryptography
