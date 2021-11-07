@@ -38,7 +38,7 @@ type OmipGui struct {
 	DebugFlag   bool
 }
 
-func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool) *OmipGui {
+func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *OmipGui {
 	var obj OmipGui
 	obj.DebugFlag = debug
 	obj.Ctrl = ctrl
@@ -75,7 +75,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool) *OmipGui {
 	obj.TabPtr.SetTabLocation(container.TabLocationLeading)
 	maintab := container.New(
 		layout.NewGridLayout(1), obj.TabPtr)
-	obj.WindowPtr = obj.AppPtr.NewWindow("OMIP - An Eve Online Data Aggregator")
+	obj.WindowPtr = obj.AppPtr.NewWindow(fmt.Sprintf("OMIP - An Eve Online Data Aggregator %s", version))
 	obj.WindowPtr.SetMainMenu(menu)
 	obj.WindowPtr.SetContent(maintab)
 	obj.WindowPtr.Resize(fyne.NewSize(1790, 800))

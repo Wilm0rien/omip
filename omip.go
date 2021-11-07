@@ -14,6 +14,10 @@ import (
 var testEnableFlag = flag.Bool("test", false, "enable tests")
 var debugEnableFlag = flag.Bool("debug", false, "enable debug tab")
 
+const (
+	WxsProductVersion = "0.0.3"
+)
+
 func main() {
 	flag.Parse()
 	// kill existing instance
@@ -26,7 +30,7 @@ func main() {
 	ctrlObj.StartServer()
 	loadErr := ctrlObj.Load(ctrl.ConfigFileName, *testEnableFlag)
 	app := app.New()
-	gui := view.NewOmipGui(ctrlObj, app, *debugEnableFlag)
+	gui := view.NewOmipGui(ctrlObj, app, *debugEnableFlag, WxsProductVersion)
 	gui.WindowPtr.Show()
 	gui.UpdateGui()
 	if loadErr != nil {
