@@ -51,7 +51,7 @@ func (obj *Ctrl) UpdateOrdersInDb(char *EsiChar, corp bool, orderList []Order) {
 		if result == model.DBR_Updated {
 			issuer := char.CharInfoData.CharacterName
 			if corp {
-				corpObj := obj.GetCorp(char.CharInfoExt.CooperationId)
+				corpObj := obj.GetCorp(char)
 				if corpObj != nil {
 					issuer = corpObj.Name
 				} else {

@@ -56,29 +56,39 @@ func (obj *Ctrl) UpdateStructures(char *EsiChar, corp bool) {
 		var structinfo []structInfo
 		//log.Printf("%s\n", string(bodyBytes))
 		contentError := json.Unmarshal(bodyBytes, &structinfo)
-		corpInfo := obj.GetCorp(char.CharInfoExt.CooperationId)
-		if contentError != nil {
-			obj.AddLogEntry(fmt.Sprintf("%s ERROR reading structures", corpInfo.Name))
+		corpInfo2 := obj.GetCorp(char)
+		if corpInfo2 != nil {
+			if contentError != nil {
+				obj.AddLogEntry(fmt.Sprintf("%s ERROR reading structures", corpInfo2.Name))
+			} else {
+				obj.processStructInfo(structinfo, corpInfo2, char)
+			}
 		} else {
-			obj.processStructInfo(structinfo, corpInfo, char)
+			obj.AddLogEntry(fmt.Sprintf("UpdateStructures %s ERROR reading corpinfo", char.CharInfoData.CharacterName))
 		}
+
 	}
 }
 
 func (obj *Ctrl) GetStructureNameFromEsi(char *EsiChar, structureId int64) (retval string) {
 	url := fmt.Sprintf("https://esi.evetech.net/v2/universe/structures/%d/?datasource=tranquility", structureId)
 	bodyBytes, _ := obj.getSecuredUrl(url, char)
-	var structName structName
-	contentError := json.Unmarshal(bodyBytes, &structName)
-	corp := obj.GetCorp(char.CharInfoExt.CooperationId)
-	if contentError != nil {
-		obj.AddLogEntry(fmt.Sprintf("%s ERROR reading structureName Code %s", corp.Name, contentError.Error()))
-		retval = fmt.Sprintf("%d", structureId)
+	var structName2 structName
+	contentError := json.Unmarshal(bodyBytes, &structName2)
+	corp := obj.GetCorp(char)
+	if corp != nil {
+		if contentError != nil {
+			obj.AddLogEntry(fmt.Sprintf("%s ERROR reading structureName Code %s", corp.Name, contentError.Error()))
+			retval = fmt.Sprintf("%d", structureId)
+		} else {
+			dbStruct := obj.convertEsiStructureName2DB(&structName2, structureId)
+			obj.Model.AddStructureNameEntry(dbStruct)
+			retval = structName2.Name
+		}
 	} else {
-		dbStruct := obj.convertEsiStructureName2DB(&structName, structureId)
-		obj.Model.AddStructureNameEntry(dbStruct)
-		retval = structName.Name
+		obj.AddLogEntry(fmt.Sprintf("GetStructureNameFromEsi %s ERROR reading corp info",char.CharInfoData.CharacterName))
 	}
+
 	return retval
 }
 
@@ -130,11 +140,15 @@ func (obj *Ctrl) processStructInfo(structinfo []structInfo, corp *EsiCorp, char 
 		}
 	}
 	corpStructures := obj.Model.GetCorpStructures(char.CharInfoExt.CooperationId)
-	nameStr := obj.GetCorp(char.CharInfoExt.CooperationId).Ticker
+	ticker:="N/A"
+	corpObj:=obj.GetCorp(char)
+	if corpObj!=nil {
+		ticker = corpObj.Ticker
+	}
 	for _, corpStruc := range corpStructures {
 		if _, ok := structureExistMap[corpStruc.StructureID]; !ok {
 			name := obj.Model.GetStructureNameStr(corpStruc.StructureID)
-			obj.AddLogEntry(fmt.Sprintf("%s: removing sturcute %s", nameStr, name))
+			obj.AddLogEntry(fmt.Sprintf("%s: removing sturcute %s", ticker, name))
 			obj.Model.DeleteStructureServiceEntries(corpStruc.StructureID)
 			obj.Model.DeleteStructureNameEntries(corpStruc.StructureID)
 			obj.Model.DeleteStructureInfoEntries(corpStruc.StructureID)

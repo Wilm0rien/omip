@@ -152,13 +152,16 @@ func (obj *Ctrl) GetCorpDirector(corpId int) *EsiChar {
 	return director
 }
 
-func (obj *Ctrl) GetCorp(corpId int) *EsiCorp {
+func (obj *Ctrl) GetCorp(char *EsiChar) *EsiCorp {
 	var retval *EsiCorp
 	for _, corp := range obj.Esi.EsiCorpList {
-		if corp.CooperationId == corpId {
+		if corp.CooperationId == char.CharInfoExt.CooperationId {
 			retval = corp
 			break
 		}
+	}
+	if retval == nil {
+		retval = obj.getAuthCorpInfo(char)
 	}
 	return retval
 }

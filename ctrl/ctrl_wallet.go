@@ -26,8 +26,12 @@ func (obj *Ctrl) UpdateWallet(char *EsiChar, corp bool) {
 			err := json.Unmarshal(bodyBytes, &corpWallets)
 			if err == nil {
 				for _, wallet := range corpWallets {
-					corpInfo := obj.GetCorp(char.CharInfoExt.CooperationId)
-					obj.handleWallet(corpInfo.Name, wallet.Balance, 0, char.CharInfoExt.CooperationId, wallet.Division)
+					corpName := "N/A"
+					corpInfo2 := obj.GetCorp(char)
+					if corpInfo2 != nil {
+						corpName = corpInfo2.Name
+					}
+					obj.handleWallet(corpName, wallet.Balance, 0, char.CharInfoExt.CooperationId, wallet.Division)
 					balance += wallet.Balance
 				}
 			}

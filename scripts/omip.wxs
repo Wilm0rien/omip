@@ -1,25 +1,29 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
    <Product Id="*" UpgradeCode="26ccb1bb-aeb3-45ff-a872-d8fce016f610" 
-            Name="OMIP" Version="0.0.1" Manufacturer="OMIP Authors" Language="1033">
+            Name="omip" Version="0.0.1" Manufacturer="https://github.com/Wilm0rien/omip" Language="1033">
       <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package"/>
       <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
 
       <Directory Id="TARGETDIR" Name="SourceDir">
          <Directory Id="ProgramFiles64Folder">
-            <Directory Id="INSTALLDIR" Name="OMIP">
+            <Directory Id="INSTALLDIR" Name="omip">
                <Component Id="ApplicationFiles" Guid="f7e05527-0ebc-4b23-9375-7f4edc056644">
                   <File Id="ApplicationFile1" Source="..\omip.exe"/>
+                  <File Id="ApplicationFile2" Source="omip_license.rtf"/>
+                  <File Id="ApplicationFile3" Source="..\COPYING"/>
+                  <File Id="ApplicationFile4" Source="omip_src.zip"/>
+                  <File Id="ApplicationFile5" Source="..\third_party_license.md"/>
                </Component>
             </Directory>
          </Directory>
 
          <Directory Id="ProgramMenuFolder">
-            <Directory Id="ProgramMenuSubfolder" Name="OMIP">
+            <Directory Id="ProgramMenuSubfolder" Name="omip">
                <Component Id="ApplicationShortcuts" Guid="de89f556-769b-42c6-8528-999709c19427">
-                  <Shortcut Id="ApplicationShortcut1" Name="OMIP" Description="OMIP" 
-                            Target="[INSTALLDIR]OMIP.exe" WorkingDirectory="INSTALLDIR"/>
-                  <RegistryValue Root="HKCU" Key="Software\OMIP" 
+                  <Shortcut Id="ApplicationShortcut1" Name="omip" Description="omip" 
+                            Target="[INSTALLDIR]omip.exe" WorkingDirectory="INSTALLDIR"/>
+                  <RegistryValue Root="HKCU" Key="Software\omip" 
                             Name="installed" Type="integer" Value="1" KeyPath="yes"/>
                   <RemoveFolder Id="ProgramMenuSubfolder" On="uninstall"/>
                </Component>
@@ -42,10 +46,10 @@
             Event="DoAction" 
             Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
     </UI>
-    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch OMIP" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch omip" />
 
     <!-- Step 3: Include the custom action -->
-    <Property Id="WixShellExecTarget" Value="[INSTALLDIR]OMIP.exe" />
+    <Property Id="WixShellExecTarget" Value="[INSTALLDIR]omip.exe" />
     <CustomAction Id="LaunchApplication" 
         BinaryKey="WixCA" 
         DllEntry="WixShellExec"

@@ -78,8 +78,10 @@ func (obj *Ctrl) InitiateKMSkipList(char *EsiChar, corp bool) {
 			kmSkipList[km.KillmailID] = true
 		}
 		if corp {
-			corpObj := obj.GetCorp(char.CharInfoExt.CooperationId)
-			corpObj.KmSkipList = kmSkipList
+			corpObj := obj.GetCorp(char)
+			if corpObj != nil {
+				corpObj.KmSkipList = kmSkipList
+			}
 		} else {
 			char.KmSkipList = kmSkipList
 		}
@@ -103,8 +105,10 @@ func (obj *Ctrl) UpdateKillMails(char *EsiChar, corp bool) {
 	if corp {
 		killsBefore, lossesBefore = obj.captureKmNumbers(char.CharInfoExt.CooperationId)
 		url = fmt.Sprintf("https://esi.evetech.net/v1/corporations/%d/killmails/recent/", char.CharInfoExt.CooperationId)
-		corpObj := obj.GetCorp(char.CharInfoExt.CooperationId)
-		kmSkipList = corpObj.KmSkipList
+		corpObj := obj.GetCorp(char)
+		if corpObj != nil {
+			kmSkipList = corpObj.KmSkipList
+		}
 	} else {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/killmails/recent/", char.CharInfoData.CharacterID)
 		kmSkipList = char.KmSkipList
@@ -138,21 +142,28 @@ func (obj *Ctrl) captureKmNumbers(corpId int) (kills int, losses int) {
 	return kills, losses
 }
 func (obj *Ctrl) kmLogEntry(char *EsiChar, kB int, kL int, lB int, lL int, lossMapping map[string]float64) {
+	corpName := "N/A"
+	corpTicker := "N/A"
+	corpObj := obj.GetCorp(char)
+	if corpObj != nil {
+		corpName = corpObj.Name
+		corpTicker = corpObj.Ticker
+	}
 	if kB != kL && lB != lL {
 		obj.AddLogEntry(fmt.Sprintf("%s kills +%d losses +%d",
-			obj.GetCorp(char.CharInfoExt.CooperationId).Name, kL-kB, lL-lB))
+			corpName, kL-kB, lL-lB))
 	} else {
 		if kB != kL {
 			obj.AddLogEntry(fmt.Sprintf("%s kills +%d",
-				obj.GetCorp(char.CharInfoExt.CooperationId).Name, kL-kB))
+				corpName, kL-kB))
 		}
 		if lB != lL {
 			obj.AddLogEntry(fmt.Sprintf("%s losses +%d",
-				obj.GetCorp(char.CharInfoExt.CooperationId).Name, lL-lB))
+				corpName, lL-lB))
 		}
 	}
 	for _, charName := range util.GetSortKeysFromStrMap(lossMapping, false) {
-		obj.AddLogEntry(fmt.Sprintf("[%s] %s lost %s", obj.GetCorp(char.CharInfoExt.CooperationId).Ticker,
+		obj.AddLogEntry(fmt.Sprintf("[%s] %s lost %s", corpTicker,
 			charName, util.HumanizeNumber(lossMapping[charName])))
 	}
 

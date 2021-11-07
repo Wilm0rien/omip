@@ -47,8 +47,12 @@ func (obj *Ctrl) getAuthCorpInfo(char *EsiChar) *EsiCorp {
 			var cinfo corpInfo
 			err := json.Unmarshal(bodyBytes, &cinfo)
 			if err != nil {
-				corp := obj.GetCorp(char.CharInfoExt.CooperationId)
-				obj.AddLogEntry(fmt.Sprintf("%s ERROR reading corporations", corp.Name))
+				corp := obj.GetCorp(char)
+				corpName:="N/A"
+				if corp != nil {
+					corpName = corp.Name
+				}
+				obj.AddLogEntry(fmt.Sprintf("%s ERROR reading corporations", corpName))
 			} else {
 				dbcorp = obj.convertEsiCorpInfo2DB(&cinfo, char.CharInfoExt.CooperationId)
 				dbResult := obj.Model.AddCorpInfoEntry(dbcorp)

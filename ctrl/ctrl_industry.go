@@ -128,7 +128,12 @@ func (obj *Ctrl) SummaryLogEntry(typeStr string, char *EsiChar, corp bool, statu
 	var nameStr string
 	//jobEndMinSeconds
 	if corp {
-		nameStr = obj.GetCorp(char.CharInfoExt.CooperationId).Name
+		corpObj := obj.GetCorp(char)
+		if corpObj != nil {
+			nameStr = corpObj.Name
+		} else {
+			nameStr = "N/A"
+		}
 	} else {
 		nameStr = char.CharInfoData.CharacterName
 	}

@@ -20,7 +20,7 @@ type Notification struct {
 
 func (obj *Ctrl) UpdateNotifications(char *EsiChar, corp bool) {
 	if !corp {
-		corpInfo2 := obj.GetCorp(char.CharInfoExt.CooperationId)
+		corpInfo2 := obj.GetCorp(char)
 		var ticker string
 		if corpInfo2 != nil {
 			ticker = corpInfo2.Ticker

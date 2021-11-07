@@ -28,7 +28,7 @@ func (obj *Ctrl) UpdateTransaction(char *EsiChar, corp bool) {
 	division := 1
 	var charId, corpId int
 	var ticker string
-	corpInfo2 := obj.GetCorp(corpId)
+	corpInfo2 := obj.GetCorp(char)
 	if corpInfo2 != nil {
 		ticker = corpInfo2.Ticker
 	}

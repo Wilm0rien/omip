@@ -305,8 +305,12 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
 	obj.UpdateGui()
 	if char.CharInfoExt.Director {
-		corp := obj.Ctrl.GetCorp(char.CharInfoExt.CooperationId)
-		obj.AddLogEntry(fmt.Sprintf("added %s director of %s", char.CharInfoData.CharacterName, corp.Name))
+		corp := obj.Ctrl.GetCorp(char)
+		if corp != nil {
+			obj.AddLogEntry(fmt.Sprintf("added %s director of %s", char.CharInfoData.CharacterName, corp.Name))
+		} else {
+			obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
+		}
 	} else {
 		obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 	}

@@ -323,8 +323,10 @@ func NewCharTable(ctrlObj *ctrl.Ctrl, gui *OmipGui) *charGuiTable {
 		var newChar charOverviewTable
 		newChar.Name = char.CharInfoData.CharacterName
 		if char.CharInfoExt.CooperationId > ctrl.EsiCorpIdLimit {
-			corp := obj.Ctrl.GetCorp(char.CharInfoExt.CooperationId)
-			newChar.Ticker = corp.Ticker
+			corp := obj.Ctrl.GetCorp(char)
+			if corp != nil {
+				newChar.Ticker = corp.Ticker
+			}
 		}
 		wallet := obj.Ctrl.Model.GetLatestWallets(char.CharInfoData.CharacterID, 0, 0)
 		balance := obj.Ctrl.Model.GetBalanceOverTime(
