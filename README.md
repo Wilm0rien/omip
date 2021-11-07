@@ -40,6 +40,29 @@ tool features.
 
 # FAQ
 
+**I get an "unkown publisher" warning when installing the windows release!**
+
+Signing windows executables is a costly thing. If you want to avoid this warning
+you have to manually build the omip tool on your system via the following steps:
+
+1. install  [GCC](https://sourceforge.net/projects/mingw-w64/)
+2. install  [GIT](https://git-scm.com/download/win)
+3. install [Go](https://golang.org/dl/)
+4. ensure gcc, git and go are listed in your PATH variable
+5. open a command line and type
+```bash
+go get github.com/Wilm0rien/omip 
+```
+this will download and build omip.exe into your %GOPATH%\bin folder
+
+**I can't find the Linux release!**
+
+For linux users you can just install [Go](https://golang.org/dl/) and run the 
+following command
+```bash
+go get github.com/Wilm0rien/omip 
+```
+
 **Where are my ESI tokens and Data stored exactly?**
 
 * $HOME/omip/ for linux
