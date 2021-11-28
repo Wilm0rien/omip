@@ -1,6 +1,6 @@
 # OMIP
 
-OMIP - An Eve Online Data Aggregator with focus on data security and privacy
+OMIP - An Eve Online Data Aggregator
 
 ## Security Features
 
@@ -12,8 +12,7 @@ OMIP - An Eve Online Data Aggregator with focus on data security and privacy
 * ESI keys are stored in your local home directory and secured by cryptography
 * ESI data is stored separately in a local database file in your home directory
 * All source code is on github under GPLv3
-* No donations (ISK or otherwise) will be accepted by the maintainers of this
-  tool
+
 
 ## Line Member features
 
