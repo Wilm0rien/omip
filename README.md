@@ -2,6 +2,23 @@
 
 OMIP - An Eve Online Data Aggregator
 
+
+## Quick Reference
+1. Download the MSI installer via the 
+   [release link](https://github.com/Wilm0rien/omip/releases/) 
+2. You will get a blue "Windows Protected your PC" screen when starting the 
+   installer. You may ignore this warning or follow the instructions in the FAQ 
+   below to build the tool from sources.
+3. After installing click "Add Character..." in the File Menu to add a director 
+4. Uncheck Items in the ESI Keys Tab to safe time if you are not interested in
+   certain info.
+5. Click "Update All Data..." in the file Menu to load the info from 
+   [esi.evetech.net](https://esi.evetech.net/)
+6. If you added a director the Corporations Tab will show the corporation
+7. If you are an Imperium Director you may click on "Login to aDashboard" in the
+   Overview Tab of your corporation to get the PAP statistic
+
+
 ## Security Features
 
 * OMIP is a program which runs natively on your computer (Linux or Windows)
@@ -39,7 +56,7 @@ tool features.
 
 # FAQ
 
-**I get an "unkown publisher" warning when installing the windows release!**
+**I get an "Windows Protected your PC" warning when installing the windows release!**
 
 Signing windows executables is a costly thing. If you want to avoid this warning
 you have to manually build the omip tool on your system via the following steps:
