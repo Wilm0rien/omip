@@ -15,7 +15,7 @@ var testEnableFlag = flag.Bool("test", false, "enable tests")
 var debugEnableFlag = flag.Bool("debug", false, "enable debug tab")
 
 const (
-	WxsProductVersion = "0.0.4"
+	WxsProductVersion = "0.0.5"
 )
 
 func main() {
