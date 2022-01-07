@@ -25,6 +25,7 @@ type ADashClient struct {
 	Username   string
 	Password   string
 	CorpTicker string
+	CorpName string
 	LoginOK    bool
 	Model      *model.Model
 	CorpID     int
@@ -55,6 +56,7 @@ func NewADashClient(username string, password string, ticker string, Model *mode
 	obj.Username = username
 	obj.Password = password
 	obj.CorpTicker = ticker
+	obj.CorpName = ticker
 	obj.Model = Model
 	obj.CorpID = corpId
 	obj.PapLogMap = make(map[string]int)
@@ -117,12 +119,13 @@ func (obj *ADashClient) Login() bool {
 		}
 		if response2.StatusCode == http.StatusOK {
 			scanner := bufio.NewScanner(strings.NewReader(string(bodyBytes)))
-			re := regexp.MustCompile(`<title>aD - (.*?)</title>`)
+			re := regexp.MustCompile(`<li><a href="/corporation/(.*?)">`)
 			for scanner.Scan() {
 				result := re.FindStringSubmatch(scanner.Text())
 				if result != nil {
-					//fmt.Printf("LOGIN OK: %s\n", string(result[1]))
+					fmt.Printf("LOGIN OK: %s\n", string(result[1]))
 					obj.LoginOK = true
+					obj.CorpName = result[1]
 					break
 				}
 			}
@@ -137,7 +140,7 @@ func (obj *ADashClient) Login() bool {
 func (obj *ADashClient) CheckPapLinks() (result string) {
 	var papsFound int
 	if obj.LoginOK {
-		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpTicker)
+		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpName)
 		htmlContent, err, _ := obj.aDHttpGet(listURL)
 		if err != nil {
 			return fmt.Sprintf("Error fetching response. %s", err.Error())
@@ -168,7 +171,7 @@ func (obj *ADashClient) CheckPapLinks() (result string) {
 
 func (obj *ADashClient) GetPapLinks() bool {
 	if obj.LoginOK {
-		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpTicker)
+		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpName)
 		bodyBytes, err, _ := obj.aDHttpGet(listURL)
 		if err != nil {
 			obj.Model.LogObj.Printf("Error fetching response. %s", err.Error())
