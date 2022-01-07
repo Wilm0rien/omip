@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<?define ProductVersion = "0.0.4"?>
+<?define ProductVersion = "0.0.5"?>
 <?define ProductUpgradeCode = "b405227c-d065-4478-8f21-1a90220f5617"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
    <Product Id="*" UpgradeCode="26ccb1bb-aeb3-45ff-a872-d8fce016f610" 
-            Name="omip" Version="0.0.4" Manufacturer="https://github.com/Wilm0rien/omip" Language="1033">
+            Name="omip" Version="0.0.5" Manufacturer="https://github.com/Wilm0rien/omip" Language="1033">
       <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package"/>
       <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
 
