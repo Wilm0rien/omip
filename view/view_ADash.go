@@ -57,7 +57,8 @@ func (obj *OmipGui) makeADashDialog(corpID int) (co fyne.CanvasObject, email *st
 		obj.Ctrl.ADash[corpID].Username = emailEntry.Text
 		obj.Ctrl.ADash[corpID].Password = pw1Entry.Text
 		if obj.Ctrl.ADash[corpID].Login() {
-			testResResult.SetText("SUCCESS")
+			testResult:= obj.Ctrl.ADash[corpID].CheckPapLinks()
+			testResResult.SetText(testResult)
 		} else {
 			testResResult.SetText("FAIL")
 		}

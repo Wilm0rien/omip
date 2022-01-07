@@ -134,6 +134,38 @@ func (obj *ADashClient) Login() bool {
 	return obj.LoginOK
 }
 
+func (obj *ADashClient) CheckPapLinks() (result string) {
+	var papsFound int
+	if obj.LoginOK {
+		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpTicker)
+		htmlContent, err, _ := obj.aDHttpGet(listURL)
+		if err != nil {
+			return fmt.Sprintf("Error fetching response. %s", err.Error())
+		} else {
+			scanner := bufio.NewScanner(strings.NewReader(string(htmlContent)))
+			re := regexp.MustCompile(`\/par\/view\/([0-9A-Za-z-]+)`)
+			for scanner.Scan() {
+				result2 := re.FindStringSubmatch(scanner.Text())
+				if result2 != nil {
+					papsFound ++
+					if papsFound < 5 {
+						papLink := result2[1]
+						result +=papLink + ", "
+					}
+				}
+			}
+		}
+	} else {
+		result = "login failed"
+	}
+	if papsFound == 0 && result == "" {
+		result = "NO PAPS FOUND"
+	} else {
+		result += fmt.Sprintf("%d PAPs found", papsFound)
+	}
+	return
+}
+
 func (obj *ADashClient) GetPapLinks() bool {
 	if obj.LoginOK {
 		listURL := fmt.Sprintf("https://adashboard.info/corporation/%s", obj.CorpTicker)

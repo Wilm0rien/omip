@@ -15,7 +15,7 @@ func TestGui(t *testing.T) {
 	ctrlObj := ctrl.NewCtrl(modelObj)
 	ctrlObj.Load(ctrl.TstCfgJson, true)
 	app := test.NewApp()
-	gui := NewOmipGui(ctrlObj, app, true)
+	gui := NewOmipGui(ctrlObj, app, true, "test version")
 	start := time.Now()
 	gui.UpdateGui()
 	//test.TapCanvas(gui.WindowPtr.Canvas(), gui.TabPtr.Position())
