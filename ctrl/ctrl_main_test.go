@@ -726,7 +726,9 @@ func TestAdash(t *testing.T) {
 						<head><meta charset="utf-8">
 							<title>aD - Corporation: Feynman Electrodynamics</title>
 						</head>
-						<body></body>
+						<body>
+						<li><a href="/corporation/FYDYN">Feynman Electrodynamics</a></li>
+						</body>
 					</html>`))
 			userOk := false
 			pwOk := false
