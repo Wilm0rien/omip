@@ -12,10 +12,16 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Wilm0rien/omip/ctrl"
+	"github.com/Wilm0rien/omip/update"
+	"github.com/Wilm0rien/omip/util"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
 )
 
 //	obj.BlueColor = color.NRGBA{62, 160, 221, 0xff}
@@ -68,6 +74,16 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 				d := dialog.NewCustom("OMIP COPYRIGHT NOTICE", "OK", obj.makeLicenseDialog(), obj.WindowPtr)
 				d.Show()
 			}),
+
+				fyne.NewMenuItem("Check for Update", func() {
+					url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", "Wilm0rien", "omip")
+					asset := update.GetRelease(url)
+
+					d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(asset.TagName, version), obj.WindowPtr)
+					d.Show()
+
+
+				}),
 		))
 
 	obj.TabPtr = container.NewAppTabs(make([]*container.TabItem, 0, 5)...)
@@ -83,6 +99,39 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 	obj.AppPtr.Settings().SetTheme(theme.DarkTheme())
 	obj.AppPtr.Settings().Scale()
 	return &obj
+}
+
+func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string) (result fyne.CanvasObject) {
+	var msg string
+	ex, _ := os.Executable()
+	exPath := filepath.Dir(ex)
+	updater:=path.Join(exPath, "omip_updater.exe")
+	if !util.Exists(updater) {
+		msg = fmt.Sprintf("ERROR updater executable not found at %s",  ex)
+	} else {
+		if newVersion == currentVersion {
+			msg = fmt.Sprintf("software is up to date %s current %s", newVersion, ex)
+		} else {
+			switch runtime.GOOS {
+			case "linux":
+				msg = fmt.Sprintf("TODO LINUX Update not implemented")
+			case "windows":
+				arguments := fmt.Sprintf(`/k %s --target=%s`, updater, ex)
+				cmd := exec.Command("cmd", arguments)
+				execErr2 := cmd.Start()
+				if execErr2 != nil {
+					log.Fatalf("error starting process %s", updater)
+				} else {
+					obj.WindowPtr.Close()
+				}
+			}
+			msg = fmt.Sprintf("a new update has been found %s current %s", newVersion, ex)
+
+		}
+	}
+
+	msgLabel := widget.NewLabel(msg)
+	return container.NewVBox(msgLabel)
 }
 
 func (obj *OmipGui) makeLicenseDialog() (result fyne.CanvasObject) {
