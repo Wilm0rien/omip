@@ -364,7 +364,7 @@ func (obj *Model) GetBounties(corpId int) []*DBTable {
 		INNER JOIN		   
 			(SELECT string_hash, string FROM string_table) stringMain
 			ON corpRef2Main.name= stringMain.string_hash
-		WHERE (ref_type=85 or ref_type=55) and corpId=%d
+		WHERE (ref_type=85 or ref_type=155) and corpId=%d
 		ORDER BY date DESC;`, corpId)
 	rows, err := obj.DB.Query(queryString)
 	util.CheckErr(err)
