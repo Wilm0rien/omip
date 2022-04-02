@@ -22,6 +22,7 @@
                   <File Id="ApplicationFile3" Source="..\COPYING"/>
                   <File Id="ApplicationFile4" Source="omip_src.zip"/>
                   <File Id="ApplicationFile5" Source="..\third_party_license.md"/>
+                  <File Id="ApplicationFile6" Source="..\omip_updater.exe"/>
                </Component>
             </Directory>
          </Directory>
