@@ -597,7 +597,7 @@ func TestJournal(t *testing.T) {
 				"ref_type": "ess_escrow_transfer",
 				"second_party_id": %d
 			  }`, jourDate, char.CharInfoData.CharacterID)
-
+	amount3 := 88360.2
 	HttpRequestMock = func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
 		resp = &http.Response{
 			StatusCode: http.StatusNotFound,
@@ -636,14 +636,14 @@ func TestJournal(t *testing.T) {
 	for _, bounty := range bounties {
 		sum += bounty.Amount
 	}
-	if sum != amount1+amount2 {
+	if sum != amount1+amount2+amount3 {
 		t.Errorf("unexpected sum of bounties: expected %3.2f got %3.2f", sum, amount1+amount2)
 	}
 	bountytable := ctrlObj.Model.GetBountyTable(char.CharInfoExt.CooperationId)
 	year, month, _ := time.Now().AddDate(0, 0, -15).Date()
 	ymStr := fmt.Sprintf("%02d-%02d", year-2000, month)
 	if val, ok := bountytable.ValCharPerMon[char.CharInfoData.CharacterName][ymStr]; ok {
-		if val != amount1 {
+		if val != amount1+amount3 {
 			t.Errorf("unexpected bounties: expected %3.2f got %3.2f", amount1, val)
 		}
 	} else {
@@ -659,7 +659,7 @@ func TestJournal(t *testing.T) {
 	for _, bounty := range bounties {
 		sum2 += bounty.Amount
 	}
-	if sum2 != amount1+amount2 {
+	if sum2 != amount1+amount2+amount3 {
 		t.Errorf("unexpected sum of bounties: expected %3.2f got %3.2f", sum, amount1+amount2)
 	}
 	ctrlObj.Model.CloseDB()
