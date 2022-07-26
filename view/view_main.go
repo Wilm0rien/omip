@@ -75,15 +75,14 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 				d.Show()
 			}),
 
-				fyne.NewMenuItem("Check for Update", func() {
-					url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", "Wilm0rien", "omip")
-					asset := update.GetRelease(url)
+			fyne.NewMenuItem("Check for Update", func() {
+				url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", "Wilm0rien", "omip")
+				asset := update.GetRelease(url)
 
-					d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(asset.TagName, version), obj.WindowPtr)
-					d.Show()
+				d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(asset.TagName, version), obj.WindowPtr)
+				d.Show()
 
-
-				}),
+			}),
 		))
 
 	obj.TabPtr = container.NewAppTabs(make([]*container.TabItem, 0, 5)...)
@@ -105,9 +104,9 @@ func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string) (
 	var msg string
 	ex, _ := os.Executable()
 	exPath := filepath.Dir(ex)
-	updater:=path.Join(exPath, "omip_updater.exe")
+	updater := path.Join(exPath, "omip_updater.exe")
 	if !util.Exists(updater) {
-		msg = fmt.Sprintf("ERROR updater executable not found at %s",  ex)
+		msg = fmt.Sprintf("ERROR updater executable not found at %s", ex)
 	} else {
 		if newVersion == currentVersion {
 			msg = fmt.Sprintf("software is up to date %s current %s", newVersion, ex)
@@ -261,6 +260,7 @@ func (obj *OmipGui) UpdateGui() {
 	obj.TabPtr.Items = append(obj.TabPtr.Items, container.NewTabItemWithIcon("My Characters", charactersheetIcon, obj.characterScreen()))
 	obj.TabPtr.Items = append(obj.TabPtr.Items, container.NewTabItemWithIcon("Corporations", corporationIcon, obj.CorpTabPtr))
 	obj.TabPtr.Items = append(obj.TabPtr.Items, container.NewTabItemWithIcon("ESI Keys", dogtagsIcon, obj.keysScreen()))
+
 	obj.CharTabPtr.Refresh()
 	if len(obj.CharTabPtr.Items) > 0 {
 		obj.CharTabPtr.Select(obj.CharTabPtr.Items[0])
