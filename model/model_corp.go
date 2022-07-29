@@ -76,7 +76,7 @@ func (obj *Model) GetCorpInfoEntry(corpId int) (retval *DBcorpInfo, result DBres
 
 	if num != 0 {
 		var newDBCorpInfo DBcorpInfo
-		queryString := fmt.Sprintf(`SELECT 
+		queryStr := fmt.Sprintf(`SELECT 
 										alliance_id,
 										ceo_id,
 										creator_id,
@@ -91,8 +91,11 @@ func (obj *Model) GetCorpInfoEntry(corpId int) (retval *DBcorpInfo, result DBres
 										ticker,
 										url,
 										war_eligible
-									FROM corp_info WHERE corporation_id="%d";`, corpId)
-		rows, err := obj.DB.Query(queryString)
+									FROM corp_info WHERE corporation_id=?;`)
+		stmt, err := obj.DB.Prepare(queryStr)
+		util.CheckErr(err)
+		defer stmt.Close()
+		rows, err := stmt.Query(corpId)
 		util.CheckErr(err)
 		defer rows.Close()
 		for rows.Next() {
@@ -241,11 +244,11 @@ func (obj *Model) AddCorpMemberEntry(member *DBcorpMember) DBresult {
 
 func (obj *Model) RemoveCorpMemberEntry(charId int, corpId int) DBresult {
 	retval := DBR_Skipped
-	queryStr := fmt.Sprintf("DELETE FROM corp_members WHERE character_id=%d AND corporation_id=%d;", charId, corpId)
+	queryStr := fmt.Sprintf("DELETE FROM corp_members WHERE character_id=? AND corporation_id=?")
 	stmt, err := obj.DB.Prepare(queryStr)
 	util.CheckErr(err)
 	defer stmt.Close()
-	res, err := stmt.Exec()
+	res, err := stmt.Exec(charId, corpId)
 	util.CheckErr(err)
 	affect, err := res.RowsAffected()
 	util.CheckErr(err)
@@ -257,8 +260,11 @@ func (obj *Model) RemoveCorpMemberEntry(charId int, corpId int) DBresult {
 
 func (obj *Model) GetCorpMemberList(corpId int) []int {
 	retval := make([]int, 0, 5)
-	queryStr := fmt.Sprintf("SELECT character_id FROM corp_members WHERE corporation_id=%d;", corpId)
-	rows, err := obj.DB.Query(queryStr)
+	queryStr := fmt.Sprintf("SELECT character_id FROM corp_members WHERE corporation_id=?;")
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -275,9 +281,12 @@ func (obj *Model) GetCorpMemberNames(corpId int) []string {
 		`SELECT 	string_table.string as CharacterName
 				FROM string_table
 				JOIN corp_members ON string_table.string_hash = corp_members.name
-				WHERE corp_members.corporation_id=%d
-				ORDER BY CharacterName COLLATE NOCASE;`, corpId)
-	rows, err := obj.DB.Query(queryStr)
+				WHERE corp_members.corporation_id=?
+				ORDER BY CharacterName COLLATE NOCASE;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -310,9 +319,12 @@ func (obj *Model) GetDBCorpMembers(corpId int) []*DBcorpMember {
 					string_table.string as CharacterName
 				FROM string_table
 				JOIN corp_members ON string_table.string_hash = corp_members.name
-				WHERE corp_members.corporation_id=%d
-				ORDER BY CharacterName COLLATE NOCASE;`, corpId)
-	rows, err := obj.DB.Query(queryStr)
+				WHERE corp_members.corporation_id=?
+				ORDER BY CharacterName COLLATE NOCASE;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -334,8 +346,11 @@ func (obj *Model) GetDBCorpMember(charID int) *DBcorpMember {
 				main_id, 
 				name 
 			FROM corp_members
-			WHERE character_id=%d;`, charID)
-	rows, err := obj.DB.Query(queryStr)
+			WHERE character_id=?;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(charID)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -377,9 +392,12 @@ func (obj *Model) GetAltMap(corpId int) (alt2main map[string]string) {
 				INNER JOIN
 					(SELECT string, string_hash FROM string_table) stringMain
 					ON stringMain.string_hash = corpRef2Main.name
-				WHERE corporation_id = 	%d
-				ORDER BY charName COLLATE NOCASE`, corpId)
-	rows, err := obj.DB.Query(queryStr)
+				WHERE corporation_id = ?
+				ORDER BY charName COLLATE NOCASE`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
