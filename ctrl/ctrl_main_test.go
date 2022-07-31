@@ -905,8 +905,8 @@ func TestAdash(t *testing.T) {
 		t.Errorf("unexpected number of paplinks expected %d got %f", 8, sumPaps)
 	}
 	sumPaps2 := ctrlObj.Model.GetCurrentPaps(corpID)
-	if sumPaps2 != 4 {
-		t.Errorf("unexpected number of paplinks expected %d got %d", 4, sumPaps2)
+	if sumPaps2 != 5 {
+		t.Errorf("unexpected number of paplinks expected %d got %d", 5, sumPaps2)
 	}
 }
 
