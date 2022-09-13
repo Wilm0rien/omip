@@ -184,16 +184,20 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 }
 
 func IsImperium(allianceID int) (retval bool) {
-	alliances := []int{
-		1354830081, 150097440, 99005518, 99003995, 99010664, 99009163, 499005583, 99009169, 131511956, 99010751,
-		99009748, 99007203, 99009805, 99006751, 99009882, 1900696668, 99007362, 1220922756, 99007916, 99004425}
-	for _, id := range alliances {
-		if allianceID == id {
-			retval = true
-			break
-		}
-	}
-	return
+	/*
+		alliances := []int{
+			1354830081, 150097440, 99005518, 99003995, 99010664, 99009163, 499005583, 99009169, 131511956, 99010751,
+			99009748, 99007203, 99009805, 99006751, 99009882, 1900696668, 99007362, 1220922756, 99007916, 99004425}
+		for _, id := range alliances {
+			if allianceID == id {
+				retval = true
+				break
+			}
+		}*/
+	/* TODO remove PAP statistic or try to connect to dank fleet dash board:
+	https://goonfleet.com/index.php/topic/329424-a-dank-fleet-dashboard-you/ */
+
+	return false
 }
 
 func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, isTab bool) fyne.CanvasObject {
@@ -233,13 +237,13 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 		bountyTab2 := container.NewTabItemWithIcon("Bounties", killreportIcon, bountyTab)
 		corpSubTabs.Append(bountyTab2)
 	}
-
+	/* TODO fix pap statistcs
 	papTab2, needed := obj.createPapTab2(corp.CooperationId, 12)
 	if needed {
 		papTab3 := container.NewTabItemWithIcon("Paps", achievementsIcon, papTab2)
 		corpSubTabs.Append(papTab3)
 	}
-
+	*/
 	iskLossObj, needed := obj.createIskLossTab(director, true)
 	if needed {
 		killtab := container.NewTabItemWithIcon("ISK Loss", terminateIcon, iskLossObj)

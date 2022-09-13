@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Wilm0rien/omip/util"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 )
@@ -87,7 +87,7 @@ func getUrl(url string) (result []byte) {
 
 	if err3 == nil {
 		if resp.StatusCode == http.StatusOK {
-			result, _ = ioutil.ReadAll(resp.Body)
+			result, _ = io.ReadAll(resp.Body)
 			resp.Body.Close()
 		}
 	} else {

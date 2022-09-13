@@ -75,15 +75,15 @@ func main() {
 			if downLoadErr != nil {
 				log.Fatalf("updated failed while downloading %s", downLoadErr.Error())
 			}
-			// TODO extract must handle a signature.txt file inside the zip file to verify!
+
 			extractErr := updater.extractExec(updater.TmpZipFullPath, updater.LocalDir)
 			if extractErr != nil {
 				log.Fatalf("update failed while extracting %s", extractErr.Error())
 			}
-			if !util.Exists(updater.TmpExeFullPath){
-				log.Fatalf("could not find extracted exe %s",updater.TmpExeFullPath)
+			if !util.Exists(updater.TmpExeFullPath) {
+				log.Fatalf("could not find extracted exe %s", updater.TmpExeFullPath)
 			}
-			start:=time.Now()
+			start := time.Now()
 			for {
 				removeErr := os.Remove(*targetExec)
 				if removeErr != nil {
@@ -99,7 +99,7 @@ func main() {
 				}
 			}
 
-			_, copyErr:= updater.Copy(updater.TmpExeFullPath, *targetExec)
+			_, copyErr := updater.Copy(updater.TmpExeFullPath, *targetExec)
 			if copyErr != nil {
 				log.Fatalf("error copying from %s to %s error %s", updater.TmpExeFullPath, *targetExec, copyErr.Error())
 			}
@@ -199,7 +199,7 @@ func (obj *Updater) extractExec(zipfile string, destination string) (err error) 
 	return
 }
 
-func (obj *Updater)  Copy(src string, dst string) (int64, error) {
+func (obj *Updater) Copy(src string, dst string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return 0, err
