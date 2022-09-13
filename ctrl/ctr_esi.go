@@ -137,7 +137,7 @@ func (obj *Ctrl) OpenAuthInBrowser() {
 func (obj *Ctrl) StartServer() {
 	obj.Svr.SrvExitDone = &sync.WaitGroup{}
 	obj.Svr.SrvExitDone.Add(1)
-	srv := &http.Server{Addr: ":4716"}
+	srv := &http.Server{Addr: "127.0.0.1:4716"}
 	obj.Svr.HTTPServerPtr = srv
 	http.HandleFunc("/", obj.webSrv)
 	obj.Svr.cancelChan = make(chan struct{})
