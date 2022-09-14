@@ -67,19 +67,23 @@ func TestInit(t *testing.T) {
 	newChar.stateMagicNum = 1628332218
 	NewChar = &newChar
 	start := time.Now()
-	urlStrShutdown := fmt.Sprintf("http://localhost:4716/callback?code=shutdown&state=0")
+	urlStrShutdown := fmt.Sprintf("http://127.0.0.1:4716/callback?code=shutdown&state=0")
 	if util.SendReq(urlStrShutdown) {
 		time.Sleep(400 * time.Millisecond)
 	}
 	elapsed := time.Since(start)
 	log.Printf("UpdateGui took %s", elapsed)
 	ctrlObj.StartServer()
-	urlStr := fmt.Sprintf("http://localhost:4716/callback?code=your-code-here&state=1628332218")
-	util.SendReq(urlStr)
+	time.Sleep(500 * time.Millisecond)
+	urlStr := fmt.Sprintf("http://127.0.0.1:4716/callback?code=your-code-here&state=1628332218")
+
+	if !util.SendReq(urlStr) {
+		t.Fatalf("request fail")
+	}
 	expectedChar := "Ion of Chios"
 	expectedCorp := "Feynman Electrodynamics"
 	select {
-	case <-time.After(50000000 * time.Second):
+	case <-time.After(5000000 * time.Second):
 		t.Errorf("timeout wating for auth")
 	case charName := <-waitForAuth:
 		if charName != expectedChar {
@@ -666,6 +670,7 @@ func TestJournal(t *testing.T) {
 }
 
 func TestAdash(t *testing.T) {
+	t.Skipf("adash to be removed")
 	TestAdashFlag = true
 	ctrlObj := initTestObj(t)
 	char := ctrlObj.Esi.EsiCharList[0]

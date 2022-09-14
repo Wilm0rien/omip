@@ -26,6 +26,10 @@ func (obj *OmipGui) updateCorpScreen() {
 				corpOverView.Refresh()
 			}
 		}
+		// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
+		obj.CorpTabPtr.OnSelected = func(item *container.TabItem) {
+			obj.recurseRefresh(item)
+		}
 		obj.CorpTabPtr.Refresh()
 	}
 }
@@ -273,6 +277,10 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 		corpSubTabs.Append(jourTab)
 	}
 
+	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
+	corpSubTabs.OnSelected = func(item *container.TabItem) {
+		obj.recurseRefresh(item)
+	}
 	corpSubTabs.SetTabLocation(container.TabLocationTop)
 
 	return corpSubTabs

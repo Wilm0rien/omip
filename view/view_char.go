@@ -28,7 +28,10 @@ func (obj *OmipGui) characterScreen() fyne.CanvasObject {
 			}
 		}
 	}
-
+	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
+	obj.CharTabPtr.OnSelected = func(item *container.TabItem) {
+		obj.recurseRefresh(item)
+	}
 	return obj.CharTabPtr
 }
 
@@ -358,6 +361,7 @@ func (obj *OmipGui) AddCharTab(char *ctrl.EsiChar) *container.TabItem {
 	charSubTabs := obj.CreateCharGui(char, true)
 	newTab := container.NewTabItem(char.CharInfoData.CharacterName, charSubTabs)
 	obj.CharTabPtr.Append(newTab)
+
 	return newTab
 }
 
@@ -446,6 +450,11 @@ func (obj *OmipGui) CreateCharGui(char *ctrl.EsiChar, isTab bool) fyne.CanvasObj
 	}
 
 	charSubTabs.SetTabLocation(container.TabLocationTop)
+
+	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
+	charSubTabs.OnSelected = func(item *container.TabItem) {
+		obj.recurseRefresh(item)
+	}
 	return charSubTabs
 }
 

@@ -268,6 +268,11 @@ func (obj *OmipGui) UpdateGui() {
 	obj.NotifyEntry.SetText(obj.NotifyText)
 	obj.TabPtr.SelectIndex(0)
 	obj.TabPtr.Refresh()
+
+	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
+	obj.TabPtr.OnSelected = func(item *container.TabItem) {
+		obj.recurseRefresh(item)
+	}
 }
 
 func (obj *OmipGui) getIconResource(imgFile string) fyne.Resource {
@@ -377,4 +382,64 @@ func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
 func (obj *OmipGui) AddLogEntry(newEntry string) {
 	obj.NotifyText += newEntry + "\n"
 	obj.NotifyEntry.SetText(obj.NotifyText)
+}
+
+func (obj *OmipGui) recurseRefresh(item *container.TabItem) {
+	//log.Printf("recurse %s", item.Text)
+	if _, ok := item.Content.(*fyne.Container); ok {
+		obj.recurseRefreshTable(item)
+	} else if cont3, ok2 := item.Content.(*container.DocTabs); ok2 {
+		for _, subTabItem := range cont3.Items {
+			//log.Printf("DocTabs subtab %s", subTabItem.Text)
+			obj.recurseRefreshTable(subTabItem)
+		}
+	} else if cont5, ok4 := item.Content.(*container.AppTabs); ok4 {
+		for _, subTabItem := range cont5.Items {
+			//log.Printf("AppTabs subtab %s", subTabItem.Text)
+			obj.recurseRefreshTable(subTabItem)
+		}
+	} else if tab, ok := item.Content.(*widget.Table); ok {
+		//log.Printf("refreshing table 1")
+		tab.Hide()
+		tab.Show()
+	}
+}
+
+func (obj *OmipGui) recurseRefreshTable(item *container.TabItem) {
+	if cont, ok := item.Content.(*fyne.Container); ok {
+		obj.recurseRefreshContainer(cont)
+	} else if _, ok2 := item.Content.(*container.DocTabs); ok2 {
+		obj.recurseRefresh(item)
+	} else if _, ok4 := item.Content.(*container.AppTabs); ok4 {
+		obj.recurseRefresh(item)
+	} else if tab, ok := item.Content.(*widget.Table); ok {
+		//log.Printf("refreshing table 2")
+		tab.Hide()
+		tab.Show()
+	}
+}
+
+func (obj *OmipGui) recurseRefreshContainer(cont *fyne.Container) {
+	for _, object := range cont.Objects {
+		if cont2, ok := object.(*fyne.Container); ok {
+			obj.recurseRefreshContainer(cont2)
+		} else if cont3, ok2 := object.(*container.DocTabs); ok2 {
+			for _, subTabItem := range cont3.Items {
+				if cont4, ok3 := subTabItem.Content.(*fyne.Container); ok3 {
+					obj.recurseRefreshContainer(cont4)
+				}
+			}
+		} else if cont5, ok4 := object.(*container.AppTabs); ok4 {
+			for _, subTabItem := range cont5.Items {
+				if cont6, ok5 := subTabItem.Content.(*fyne.Container); ok5 {
+					obj.recurseRefreshContainer(cont6)
+				}
+			}
+		}
+		if tab, ok := object.(*widget.Table); ok {
+			//log.Printf("refreshing table 3")
+			tab.Hide()
+			tab.Show()
+		}
+	}
 }
