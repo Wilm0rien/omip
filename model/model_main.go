@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/util"
 	_ "github.com/mattn/go-sqlite3"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -282,7 +281,7 @@ func (obj *Model) checkTableExists(tableName string) bool {
 
 func (obj *Model) LoadEtag(Etag string) (bodybytes []byte) {
 	fileName := path.Join(obj.LocalEtagCache, Etag)
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err == nil {
 		bodybytes = content
 	} else {
@@ -295,7 +294,7 @@ func (obj *Model) StoreEtag(newEtag string, oldEtag string, bodybytes []byte) (r
 	NewFileName := path.Join(obj.LocalEtagCache, newEtag)
 	OldFileName := path.Join(obj.LocalEtagCache, oldEtag)
 	if !util.Exists(NewFileName) {
-		err := ioutil.WriteFile(NewFileName, bodybytes, 0644)
+		err := os.WriteFile(NewFileName, bodybytes, 0644)
 		if err != nil {
 			log.Printf("error writing etag %s", err.Error())
 		} else {

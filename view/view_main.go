@@ -221,16 +221,17 @@ func (obj *OmipGui) UpdateAllData() {
 					itemCount++
 					prog.SetValue(float64(itemCount) / float64(totalItems))
 				}
-				if _, ok := obj.Ctrl.ADash[corp.CooperationId]; !ok {
-					if obj.Ctrl.Model.ADashAuthExists(corp.CooperationId) {
-						email, pw, _ := obj.Ctrl.Model.GetAuth(corp.CooperationId)
-						ticker := obj.Ctrl.Model.GetCorpTicker(corp.CooperationId)
-						obj.Ctrl.ADash[corp.CooperationId] = ctrl.NewADashClient(email, pw, ticker, obj.Ctrl.Model, corp.CooperationId)
-						obj.Ctrl.ADash[corp.CooperationId].AddLogCB = obj.Ctrl.AddLogEntry
-						obj.Ctrl.ADash[corp.CooperationId].Username = email
-						obj.Ctrl.ADash[corp.CooperationId].Password = pw
+				/* TODO remove adash
+					if _, ok := obj.Ctrl.ADash[corp.CooperationId]; !ok {
+						if obj.Ctrl.Model.ADashAuthExists(corp.CooperationId) {
+							email, pw, _ := obj.Ctrl.Model.GetAuth(corp.CooperationId)
+							ticker := obj.Ctrl.Model.GetCorpTicker(corp.CooperationId)
+							obj.Ctrl.ADash[corp.CooperationId] = ctrl.NewADashClient(email, pw, ticker, obj.Ctrl.Model, corp.CooperationId)
+							obj.Ctrl.ADash[corp.CooperationId].AddLogCB = obj.Ctrl.AddLogEntry
+							obj.Ctrl.ADash[corp.CooperationId].Username = email
+							obj.Ctrl.ADash[corp.CooperationId].Password = pw
+						}
 					}
-				}
 
 				if aDash, ok := obj.Ctrl.ADash[corp.CooperationId]; ok {
 					if aDash.Username != "test@example.com" && aDash.Password != "" {
@@ -243,6 +244,7 @@ func (obj *OmipGui) UpdateAllData() {
 						}
 					}
 				}
+				*/
 			}
 		}
 		prog.SetValue(1)

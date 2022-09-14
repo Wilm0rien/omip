@@ -210,11 +210,13 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 	corpLogo.File = corp.ImageFile
 
 	vbox := container.NewVBox(make([]fyne.CanvasObject, 0, 10)...)
-
+	/* TODO remove adash
 	if IsImperium(corp.AllianceId) {
 		aDashBtn := obj.aDashButton(corp.CooperationId)
 		vbox.Objects = append(vbox.Objects, aDashBtn)
 	}
+
+	*/
 	if len(obj.CorpTabPtr.Items) > 0 && isTab {
 		vbox.Objects = append(vbox.Objects)
 	}
