@@ -216,7 +216,7 @@ func (obj *Model) AddJournalLinkEntry(jLnkItem *DBJournalLink) DBresult {
 	return retval
 }
 func (obj *Model) GetJournalForContract(ctrID int) (result *DBJournal) {
-	queryString := fmt.Sprintf(`
+	queryStr := fmt.Sprintf(`
 		SELECT 
 			charId,
 			corpId,
@@ -237,8 +237,11 @@ func (obj *Model) GetJournalForContract(ctrID int) (result *DBJournal) {
 		FROM journal 
 		Inner JOIN
 			journal_links ON journal.id = journal_links.journalID
-		WHERE journal_links.contractID = %d;`, ctrID)
-	rows, err := obj.DB.Query(queryString)
+		WHERE journal_links.contractID = ?;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	defer stmt.Close()
+	util.CheckErr(err)
+	rows, err := stmt.Query(ctrID)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -347,7 +350,7 @@ func (obj *Model) AddJournalEntry(jouItem *DBJournal) DBresult {
 
 func (obj *Model) GetBounties(corpId int) []*DBTable {
 	var retval []*DBTable
-	queryString := fmt.Sprintf(`
+	queryStr := fmt.Sprintf(`
 		SELECT 
 			date, 
 			amount,
@@ -364,11 +367,16 @@ func (obj *Model) GetBounties(corpId int) []*DBTable {
 		INNER JOIN		   
 			(SELECT string_hash, string FROM string_table) stringMain
 			ON corpRef2Main.name= stringMain.string_hash
-		WHERE (ref_type=85 or ref_type=155) and corpId=%d
-		ORDER BY date DESC;`, corpId)
-	rows, err := obj.DB.Query(queryString)
+		WHERE (ref_type=85 or ref_type=155) and corpId=?
+		ORDER BY date DESC;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+
+	rows, err := stmt.Query(corpId)
 	util.CheckErr(err)
 	defer rows.Close()
+
 	for rows.Next() {
 		var elem DBTable
 		rows.Scan(&elem.Time, &elem.Amount, &elem.AltName, &elem.MainName)
@@ -384,11 +392,8 @@ func (obj *Model) GetBountyTable(corpId int) *MonthlyTable {
 
 func (obj *Model) GetJournal(charId int, corpId int, corp bool) []*DBJournal {
 	retval := make([]*DBJournal, 0, 100)
-	whereClause := fmt.Sprintf(`charId=%d and walletDivId==0`, charId)
-	if corp {
-		whereClause = fmt.Sprintf(`corpId=%d and walletDivId!=0`, corpId)
-	}
-	queryString := fmt.Sprintf(`SELECT
+
+	queryStringChar := fmt.Sprintf(`SELECT
 			charId,
 			corpId,
 			walletDivId,
@@ -406,8 +411,39 @@ func (obj *Model) GetJournal(charId int, corpId int, corp bool) []*DBJournal {
 			tax,
 			tax_receiver_id
 		FROM journal
-		WHERE %s ORDER BY date DESC;`, whereClause)
-	rows, err := obj.DB.Query(queryString)
+		WHERE charId=? and walletDivId==0 ORDER BY date DESC;`)
+	queryStringCorp := fmt.Sprintf(`SELECT
+			charId,
+			corpId,
+			walletDivId,
+			amount,
+			balance,
+			context_id,
+			context_id_type,
+			date,
+			description,
+			first_party_id,
+			id,
+			reason,
+			ref_type,
+			second_party_id,
+			tax,
+			tax_receiver_id
+		FROM journal
+		WHERE corpId=? and walletDivId!=0 ORDER BY date DESC;`)
+	queryStr := queryStringChar
+	if corp {
+		queryStr = queryStringCorp
+	}
+
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	queryId := charId
+	if corp {
+		queryId = corpId
+	}
+	rows, err := stmt.Query(queryId)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
