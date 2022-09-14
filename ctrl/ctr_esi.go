@@ -40,11 +40,12 @@ type UpdateFlags struct {
 }
 
 type EsiData struct {
-	EsiCharList []*EsiChar
-	EsiCorpList []*EsiCorp
-	SecretCode  []byte
-	NVConfig    NVConfigData
-	ETags       map[string]string // map[url]=etag
+	EsiCharList  []*EsiChar
+	EsiCorpList  []*EsiCorp
+	SecretCode   []byte
+	NVConfig     NVConfigData
+	ETags        map[string]string // map[url]=etag
+	CacheEntries map[string]int64  // map[url]=future cache expire unix time stamp
 }
 
 type EsiChar struct {
@@ -415,18 +416,32 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 		req.Header.Add("Authorization", "Bearer "+char.RefreshAuthData.AccessToken)
 		req.Header.Add("Host", "login.eveonline.com")
 		oldEtag := ""
+
+		var requestOK bool
+		var noError bool
+		var retrycounter int
+
 		if val, ok := obj.Esi.ETags[url]; ok {
 			oldEtag = val
 			bodyBytes = obj.Model.LoadEtag(oldEtag)
 			if bodyBytes != nil {
 				req.Header.Add("If-None-Match", oldEtag)
 			}
-
+		}
+		if expireTime, ok := obj.Esi.CacheEntries[url]; ok {
+			if expireTime > time.Now().Unix()-24*60*60 &&
+				expireTime < time.Now().Unix()+24*60*60 { // check value is plausible = at least older than 24h before now
+				if expireTime > time.Now().Unix() { // check if cacheing is active
+					if bodyBytes != nil {
+						log.Printf("RESP (cached): %d bytes\n", len(bodyBytes))
+						requestOK = true
+						etagTrigger = true
+					}
+				}
+			}
 		}
 
-		var requestOK bool
-		var noError bool
-		var retrycounter int
+		// do not send request if etag data can be reused and cache is not expired
 
 		for !requestOK && retrycounter < 3 {
 			bodyBytes2, clientErr, resp := obj.httpClientRequest(req)
@@ -459,7 +474,22 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 								Xpages, _ = strconv.Atoi(val[0])
 							}
 						}
-
+						var serverTime int64
+						var expireTime int64
+						if val, ok := resp.Header["Date"]; ok {
+							if len(resp.Header["Date"]) == 1 {
+								serverTime = util.ConvertServerTimeStrToInt(val[0])
+							}
+						}
+						if val, ok := resp.Header["Expires"]; ok {
+							if len(resp.Header["Expires"]) == 1 {
+								expireTime = util.ConvertServerTimeStrToInt(val[0])
+							}
+						}
+						if serverTime != 0 && expireTime != 0 && expireTime > serverTime {
+							cacheTime := expireTime - serverTime
+							obj.Esi.CacheEntries[url] = time.Now().Unix() + cacheTime
+						}
 						if len(bodyBytes2) > 0 {
 							requestOK = true
 							if newEtag, ok := resp.Header["Etag"]; ok {

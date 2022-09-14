@@ -406,6 +406,20 @@ func ConvertTimeStrToInt(timeString string) int64 {
 	return retval
 }
 
+func ConvertServerTimeStrToInt(timeString string) int64 {
+	var retval int64
+	if timeString != "" {
+		t, err := time.Parse("Wed, 02 Jan 2006 15:04:05 GMT", timeString)
+		if err != nil {
+			fmt.Println(err)
+			log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
+		} else {
+			retval = t.Unix()
+		}
+	}
+	return retval
+}
+
 func ConvertUnixTimeToStr(timeValue int64) string {
 	tm := time.Unix(timeValue, 0)
 	return tm.Format("2006-01-02 15:04:05")

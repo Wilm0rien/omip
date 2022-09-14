@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
-	"io/ioutil"
 	"os"
 	"time"
 )
@@ -116,7 +115,7 @@ func (obj *Ctrl) Load(cfgFileName string, testEnable bool) (retval error) {
 
 	authData := obj.Model.LocalDir + "/" + cfgFileName
 	if util.Exists(authData) {
-		file, err := ioutil.ReadFile(authData)
+		file, err := os.ReadFile(authData)
 		if err != nil {
 			retval = &EsiFileError{ErrorCode: ESI_FILE_OPEN_ERROR, FileName: authData, ExtErr: err.Error()}
 		}
@@ -136,6 +135,9 @@ func (obj *Ctrl) Load(cfgFileName string, testEnable bool) (retval error) {
 	}
 	if obj.Esi.ETags == nil {
 		obj.Esi.ETags = make(map[string]string)
+	}
+	if obj.Esi.CacheEntries == nil {
+		obj.Esi.CacheEntries = make(map[string]int64)
 	}
 	return retval
 }
