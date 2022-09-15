@@ -27,6 +27,10 @@ import (
 	"time"
 )
 
+const (
+	updateUrl = "https://api.github.com/repos/Wilm0rien/omip/releases"
+)
+
 //	obj.BlueColor = color.NRGBA{62, 160, 221, 0xff}
 
 type WindowList struct {
@@ -45,10 +49,12 @@ type OmipGui struct {
 	NotifyEntry *widget.Entry
 	NotifyText  string
 	DebugFlag   bool
+	Version     string
 }
 
 func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *OmipGui {
 	var obj OmipGui
+	obj.Version = version
 	obj.DebugFlag = debug
 	obj.Ctrl = ctrl
 	obj.Ctrl.AuthCb = obj.AddEsiKey
@@ -82,8 +88,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 			}),
 
 			fyne.NewMenuItem("Check for Update", func() {
-				url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", "Wilm0rien", "omip")
-				asset := update.GetRelease(url)
+				asset := update.GetRelease(updateUrl)
 
 				d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(asset.TagName, version), obj.WindowPtr)
 				d.Show()
@@ -257,7 +262,7 @@ func (obj *OmipGui) UpdateAllData() {
 		Updates = append(Updates, obj.Ctrl.UpdateNotifications)
 		Updates = append(Updates, obj.Ctrl.UpdateTransaction)
 		Updates = append(Updates, obj.Ctrl.UpdateOrders)
-
+		jobList := []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
 		totalItems := (len(obj.Ctrl.Esi.EsiCharList) + len(obj.Ctrl.Esi.EsiCorpList) + 1) * len(Updates)
 		// add 1 journal request per character and 7 journal requests per corp
 		totalItems += len(obj.Ctrl.Esi.EsiCharList) + (len(obj.Ctrl.Esi.EsiCorpList) * 7)
@@ -270,7 +275,8 @@ func (obj *OmipGui) UpdateAllData() {
 			// this is because only contracts with journal links are identified as relevant for being stored
 			obj.Ctrl.UpdateJournal(char, false, 0)
 			itemCount++
-			for _, updateFunc := range Updates {
+			for idx, updateFunc := range Updates {
+				obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, jobList[idx]))
 				updateFunc(char, false)
 				itemCount++
 				prog.SetValue(float64(itemCount) / float64(totalItems))
@@ -281,12 +287,14 @@ func (obj *OmipGui) UpdateAllData() {
 		for _, corp := range obj.Ctrl.Esi.EsiCorpList {
 			director := obj.Ctrl.GetCorpDirector(corp.CooperationId)
 			if director != nil {
-				for _, updateFunc := range Updates {
+				for idx, updateFunc := range Updates {
+					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, jobList[idx]))
 					updateFunc(director, true)
 					itemCount++
 					prog.SetValue(float64(itemCount) / float64(totalItems))
 				}
 				for i := 1; i <= 7; i++ {
+					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
 					obj.Ctrl.UpdateJournal(director, true, i)
 					itemCount++
 					prog.SetValue(float64(itemCount) / float64(totalItems))
@@ -448,6 +456,14 @@ func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
 	obj.NotifyEntry = entryMultiLine
 	obj.Progress = widget.NewProgressBar()
 	obj.Progress.Hide()
+	asset := update.GetRelease(updateUrl)
+	if asset == nil {
+		obj.Ctrl.AddLogEntry(fmt.Sprintf("ERROR could not read update url %s", updateUrl))
+	} else {
+		if asset.TagName != obj.Version {
+			obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", asset.TagName))
+		}
+	}
 	return container.NewBorder(nil, obj.Progress, nil, nil, scroll)
 }
 

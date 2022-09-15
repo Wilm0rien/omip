@@ -352,10 +352,8 @@ func (obj *Ctrl) CheckServerUp(char *EsiChar) (retval bool) {
 }
 
 func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) {
-	timeStart := time.Now()
-	obj.UpdateGuiStatus1(char.CharInfoData.CharacterName)
-	obj.UpdateGuiStatus2("req pending")
 	if time.Now().Unix() >= char.NextAuthTimeStamp || enforce {
+		obj.UpdateGuiStatus2(fmt.Sprintf("auth %s", char.CharInfoData.CharacterName))
 		URLEncodedToken := url.QueryEscape(char.InitAuth.RefreshToken)
 		body2 := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s",
 			URLEncodedToken, clientID)
@@ -367,7 +365,6 @@ func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) {
 		char.NextAuthTimeStamp =
 			int64(time.Now().Unix()) + int64(char.RefreshAuthData.ExpiresIn-1)
 	}
-	obj.UpdateGuiStatus2(fmt.Sprintf("req finished %s", time.Since(timeStart)))
 }
 
 func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
@@ -412,8 +409,8 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 		obj.AddLogEntry("ERROR  no initial auth saved")
 		return nil, 0
 	} else {
-		obj.UpdateGuiStatus1(url)
-		obj.UpdateGuiStatus2("req pending")
+		obj.UpdateGuiStatus2(url)
+
 		req, err1 := http.NewRequest("GET", url, nil)
 		if err1 != nil {
 			obj.AddLogEntry(fmt.Sprintf("ERROR %s", err1.Error()))
@@ -538,7 +535,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			bodyBytes = nil
 		}
 		elapsed := time.Since(timeStart)
-		obj.UpdateGuiStatus2(fmt.Sprintf("%s %s", status, elapsed))
+		obj.UpdateGuiStatus2(fmt.Sprintf("%s %s %s", url, status, elapsed))
 	}
 
 	if !CtrlTestEnable && !etagTrigger {
