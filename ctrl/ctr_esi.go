@@ -352,6 +352,9 @@ func (obj *Ctrl) CheckServerUp(char *EsiChar) (retval bool) {
 }
 
 func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) {
+	timeStart := time.Now()
+	obj.UpdateGuiStatus1(char.CharInfoData.CharacterName)
+	obj.UpdateGuiStatus2("req pending")
 	if time.Now().Unix() >= char.NextAuthTimeStamp || enforce {
 		URLEncodedToken := url.QueryEscape(char.InitAuth.RefreshToken)
 		body2 := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s",
@@ -363,12 +366,13 @@ func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) {
 		}
 		char.NextAuthTimeStamp =
 			int64(time.Now().Unix()) + int64(char.RefreshAuthData.ExpiresIn-1)
-
 	}
+	obj.UpdateGuiStatus2(fmt.Sprintf("req finished %s", time.Since(timeStart)))
 }
 
 func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
 	url := "https://login.eveonline.com/v2/oauth/token"
+
 	req, err1 := http.NewRequest("POST", url, bytes.NewBufferString(body))
 	if err1 != nil {
 		obj.AddLogEntry(fmt.Sprintf("ERROR accessing login.eveonline.com %s", err1.Error()))
@@ -521,21 +525,20 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			}
 			retrycounter++
 		}
-
+		status := "OK"
 		if !requestOK {
+			status = "FAILED"
 			if !noError {
 				matched, _ := regexp.MatchString(`roles`, url)
 				if !matched {
 					obj.AddLogEntry(fmt.Sprintf("URL FAILED: %s", url))
 				}
 			}
-			obj.UpdateGuiStatus1(fmt.Sprintf("FAILED (%s)", url))
+
 			bodyBytes = nil
-		} else {
-			obj.UpdateGuiStatus1(fmt.Sprintf("OK (%s)", url))
 		}
 		elapsed := time.Since(timeStart)
-		obj.UpdateGuiStatus2(fmt.Sprintf("%s", elapsed))
+		obj.UpdateGuiStatus2(fmt.Sprintf("%s %s", status, elapsed))
 	}
 
 	if !CtrlTestEnable && !etagTrigger {
