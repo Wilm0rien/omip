@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/cmd/fyne_settings/settings"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -14,6 +15,7 @@ import (
 	"github.com/Wilm0rien/omip/ctrl"
 	"github.com/Wilm0rien/omip/update"
 	"github.com/Wilm0rien/omip/util"
+	"image/color"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -22,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 //	obj.BlueColor = color.NRGBA{62, 160, 221, 0xff}
@@ -89,18 +92,82 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 		))
 
 	obj.TabPtr = container.NewAppTabs(make([]*container.TabItem, 0, 5)...)
-
 	obj.TabPtr.SetTabLocation(container.TabLocationLeading)
-	maintab := container.New(
-		layout.NewGridLayout(1), obj.TabPtr)
+	mainContainer := container.NewBorder(nil, obj.makeBottomStatus(), nil, nil, obj.TabPtr)
+
 	obj.WindowPtr = obj.AppPtr.NewWindow(fmt.Sprintf("OMIP - An Eve Online Data Aggregator %s", version))
 	obj.WindowPtr.SetMainMenu(menu)
-	obj.WindowPtr.SetContent(maintab)
+	obj.WindowPtr.SetContent(mainContainer)
 	obj.WindowPtr.Resize(fyne.NewSize(1790, 800))
 	obj.WindowPtr.SetMaster()
 	obj.AppPtr.Settings().SetTheme(theme.DarkTheme())
 	obj.AppPtr.Settings().Scale()
 	return &obj
+}
+
+func (obj *OmipGui) makeBottomStatus() (result fyne.CanvasObject) {
+	statusCol1 := color.NRGBA{0xff, 0xff, 0xff, 0xff}
+	statusCol2 := color.NRGBA{0xff, 0xff, 0xff, 0xff}
+
+	statusLabel1 := canvas.NewText("", statusCol1)
+	statusLabel2 := canvas.NewText("", statusCol2)
+	newBottomGrid := container.NewGridWithColumns(2, statusLabel1, statusLabel2)
+
+	lastUpdate := time.Now()
+	status1Chan := make(chan string, 1000)
+	status2Chan := make(chan string, 1000)
+	updateStatusCB := func(entry string, fieldId int) {
+		switch fieldId {
+		case 1:
+			status1Chan <- entry
+		case 2:
+			status2Chan <- entry
+		}
+	}
+
+	go func() {
+		for {
+			elapsed := time.Since(lastUpdate)
+			if elapsed.Milliseconds() > 50 {
+
+				select {
+				case <-time.After(50 * time.Millisecond):
+					if statusCol1.A > 40 {
+						statusCol1.A -= 40
+					} else {
+						statusCol1.A = 0
+					}
+					if statusCol2.A > 40 {
+						statusCol2.A -= 40
+					} else {
+						statusCol2.A = 0
+					}
+					statusLabel1.Color = statusCol1
+					statusLabel1.Refresh()
+					statusLabel2.Color = statusCol2
+					statusLabel2.Refresh()
+				case status1 := <-status1Chan:
+					statusCol1 = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+					statusLabel1.Text = status1
+					statusLabel1.Color = statusCol1
+					statusLabel1.Refresh()
+				case status2 := <-status2Chan:
+					statusCol2 = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+					statusLabel2.Text = status2
+					statusLabel2.Color = statusCol2
+					statusLabel2.Refresh()
+				}
+				lastUpdate = time.Now()
+			}
+
+			if obj.Ctrl.ServerCancelled() {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
+	obj.Ctrl.GuiStatusCB = updateStatusCB
+	return newBottomGrid
 }
 
 func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string) (result fyne.CanvasObject) {

@@ -30,14 +30,15 @@ type NVConfigData struct {
 }
 
 type Ctrl struct {
-	Model      *model.Model
-	Esi        EsiData
-	Svr        httpSrvData
-	AuthCb     AuthCallBack
-	ADash      map[int]*ADashClient
-	urlCache   map[string]urlCache
-	LogEntries []string
-	AddLogCB   func(entry string)
+	Model       *model.Model
+	Esi         EsiData
+	Svr         httpSrvData
+	AuthCb      AuthCallBack
+	ADash       map[int]*ADashClient
+	urlCache    map[string]urlCache
+	LogEntries  []string
+	AddLogCB    func(entry string)
+	GuiStatusCB func(entry string, fieldId int)
 }
 
 func NewCtrl(model *model.Model) *Ctrl {
@@ -176,4 +177,15 @@ func (obj *Ctrl) AddLogEntry(entry string) {
 		obj.AddLogCB(logEntry)
 	}
 	obj.LogEntries = append(obj.LogEntries, logEntry)
+}
+
+func (obj *Ctrl) UpdateGuiStatus1(entry string) {
+	if obj.GuiStatusCB != nil {
+		obj.GuiStatusCB(entry, 1)
+	}
+}
+func (obj *Ctrl) UpdateGuiStatus2(entry string) {
+	if obj.GuiStatusCB != nil {
+		obj.GuiStatusCB(entry, 2)
+	}
 }

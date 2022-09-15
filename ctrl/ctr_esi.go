@@ -402,10 +402,14 @@ func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
 func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpages int) {
 	obj.RefreshAuth(char, false)
 	etagTrigger := false
+	timeStart := time.Now()
+
 	if len(char.RefreshAuthData.AccessToken) == 0 {
 		obj.AddLogEntry("ERROR  no initial auth saved")
 		return nil, 0
 	} else {
+		obj.UpdateGuiStatus1(url)
+		obj.UpdateGuiStatus2("req pending")
 		req, err1 := http.NewRequest("GET", url, nil)
 		if err1 != nil {
 			obj.AddLogEntry(fmt.Sprintf("ERROR %s", err1.Error()))
@@ -435,6 +439,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 				if expireTime > now { // check if cacheing is active
 					if bodyBytes != nil {
 						timeDiff := expireTime - now
+						obj.Model.LogObj.Printf("REQ: %s\n", req)
 						obj.Model.LogObj.Printf("RESP (cached %d seconds left): %d bytes\n", timeDiff, len(bodyBytes))
 						requestOK = true
 						etagTrigger = true
@@ -524,10 +529,15 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					obj.AddLogEntry(fmt.Sprintf("URL FAILED: %s", url))
 				}
 			}
+			obj.UpdateGuiStatus1(fmt.Sprintf("FAILED (%s)", url))
 			bodyBytes = nil
+		} else {
+			obj.UpdateGuiStatus1(fmt.Sprintf("OK (%s)", url))
 		}
-
+		elapsed := time.Since(timeStart)
+		obj.UpdateGuiStatus2(fmt.Sprintf("%s", elapsed))
 	}
+
 	if !CtrlTestEnable && !etagTrigger {
 		time.Sleep(200 * time.Millisecond)
 	}
