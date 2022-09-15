@@ -1,6 +1,6 @@
 echo off 
 
-go build omip_updater.go
+go build -ldflags "-w -s" omip_updater.go
 IF '%ERRORLEVEL%'=='0' GOTO OK
 GOTO:EOF
 :OK
