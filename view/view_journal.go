@@ -11,7 +11,6 @@ import (
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
 	"image/color"
-	"log"
 	"math"
 	"regexp"
 	"strconv"
@@ -230,7 +229,7 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 			returnColor.G = uint8(green)
 			returnColor.B = uint8(ratio * 127)
 			returnColor.R = uint8(ratio * 127)
-			//log.Printf("input %3.2f green: %d", input, uint8(green))
+			//obj.Ctrl.Model.LogObj.Printf("input %3.2f green: %d", input, uint8(green))
 
 		} else {
 			ratio = math.Abs(input) / maxAbsNegative
@@ -238,7 +237,7 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 			returnColor.R = uint8(red)
 			returnColor.B = uint8(ratio * 127)
 			returnColor.G = uint8(ratio * 127)
-			//log.Printf("input %3.2f ratio %3.2f red: %v", input, ratio, returnColor)
+			//obj.Ctrl.Model.LogObj.Printf("input %3.2f ratio %3.2f red: %v", input, ratio, returnColor)
 		}
 		return &returnColor
 	}
@@ -581,7 +580,6 @@ func getMonthStartTime(year int, month time.Month) (t time.Time) {
 	t, err := time.Parse("2006-01-02T15:04:05Z", timeString)
 	if err != nil {
 		fmt.Println(err)
-		log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
 	}
 	return
 }

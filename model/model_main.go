@@ -36,6 +36,7 @@ const (
 	LogFileName     = "omip.log"
 	LogFileNameTest = "omipTest.log"
 	DebounceTimeSec = 60 * 5
+	LogBufferSIze   = 5000
 )
 
 type DBresult int

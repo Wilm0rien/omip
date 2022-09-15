@@ -25,7 +25,7 @@ type ADashClient struct {
 	Username   string
 	Password   string
 	CorpTicker string
-	CorpName string
+	CorpName   string
 	LoginOK    bool
 	Model      *model.Model
 	CorpID     int
@@ -71,7 +71,7 @@ func (obj *ADashClient) aDHttpGet(url string) (bodyBytes []byte, err error, resp
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {
 				bodyBytes, _ = ioutil.ReadAll(resp.Body)
-				//log.Printf("url: %s\naDHttpGet\n%s\n", url, string(bodyBytes))
+				//obj.Model.LogObj.Printf("url: %s\naDHttpGet\n%s\n", url, string(bodyBytes))
 				resp.Body.Close()
 			}
 		}
@@ -89,7 +89,7 @@ func (obj *ADashClient) aDHttpPostForm(url string, data url.Values) (bodyBytes [
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {
 				bodyBytes, _ = ioutil.ReadAll(resp.Body)
-				//log.Printf("url: %s\naDHttpPostForm\n%s\n", url, string(bodyBytes))
+				//obj.Model.LogObj.Printf("url: %s\naDHttpPostForm\n%s\n", url, string(bodyBytes))
 				resp.Body.Close()
 			}
 		}
@@ -150,10 +150,10 @@ func (obj *ADashClient) CheckPapLinks() (result string) {
 			for scanner.Scan() {
 				result2 := re.FindStringSubmatch(scanner.Text())
 				if result2 != nil {
-					papsFound ++
+					papsFound++
 					if papsFound < 5 {
 						papLink := result2[1]
-						result +=papLink + ", "
+						result += papLink + ", "
 					}
 				}
 			}

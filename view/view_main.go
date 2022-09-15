@@ -68,6 +68,9 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 				w.Resize(fyne.NewSize(480, 480))
 				w.Show()
 			}),
+			fyne.NewMenuItem("Open Log File", func() {
+				util.OpenUrl(obj.Ctrl.Model.LocalLogFile)
+			}),
 		),
 		fyne.NewMenu("Help",
 			fyne.NewMenuItem("LICENSE", func() {
@@ -280,14 +283,14 @@ func (obj *OmipGui) UpdateGui() {
 func (obj *OmipGui) getIconResource(imgFile string) fyne.Resource {
 	iconFile, err := os.Open(imgFile)
 	if err != nil {
-		log.Printf(err.Error())
+		obj.Ctrl.Model.LogObj.Printf(err.Error())
 	}
 
 	r := bufio.NewReader(iconFile)
 
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		log.Printf(err.Error())
+		obj.Ctrl.Model.LogObj.Printf(err.Error())
 	}
 
 	return fyne.NewStaticResource("icon", b)
@@ -387,21 +390,21 @@ func (obj *OmipGui) AddLogEntry(newEntry string) {
 }
 
 func (obj *OmipGui) recurseRefresh(item *container.TabItem) {
-	//log.Printf("recurse %s", item.Text)
+	//obj.Ctrl.Model.LogObj.Printf("recurse %s", item.Text)
 	if _, ok := item.Content.(*fyne.Container); ok {
 		obj.recurseRefreshTable(item)
 	} else if cont3, ok2 := item.Content.(*container.DocTabs); ok2 {
 		for _, subTabItem := range cont3.Items {
-			//log.Printf("DocTabs subtab %s", subTabItem.Text)
+			//obj.Ctrl.Model.LogObj.Printf("DocTabs subtab %s", subTabItem.Text)
 			obj.recurseRefreshTable(subTabItem)
 		}
 	} else if cont5, ok4 := item.Content.(*container.AppTabs); ok4 {
 		for _, subTabItem := range cont5.Items {
-			//log.Printf("AppTabs subtab %s", subTabItem.Text)
+			//obj.Ctrl.Model.LogObj.Printf("AppTabs subtab %s", subTabItem.Text)
 			obj.recurseRefreshTable(subTabItem)
 		}
 	} else if tab, ok := item.Content.(*widget.Table); ok {
-		//log.Printf("refreshing table 1")
+		//obj.Ctrl.Model.LogObj.Printf("refreshing table 1")
 		tab.Hide()
 		tab.Show()
 	}
@@ -415,7 +418,7 @@ func (obj *OmipGui) recurseRefreshTable(item *container.TabItem) {
 	} else if _, ok4 := item.Content.(*container.AppTabs); ok4 {
 		obj.recurseRefresh(item)
 	} else if tab, ok := item.Content.(*widget.Table); ok {
-		//log.Printf("refreshing table 2")
+		//obj.Ctrl.Model.LogObj.Printf("refreshing table 2")
 		tab.Hide()
 		tab.Show()
 	}
@@ -439,7 +442,7 @@ func (obj *OmipGui) recurseRefreshContainer(cont *fyne.Container) {
 			}
 		}
 		if tab, ok := object.(*widget.Table); ok {
-			//log.Printf("refreshing table 3")
+			//obj.Ctrl.Model.LogObj.Printf("refreshing table 3")
 			tab.Hide()
 			tab.Show()
 		}

@@ -8,7 +8,6 @@ import (
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
 	"image/color"
-	"log"
 	"math"
 	"regexp"
 	"sort"
@@ -182,7 +181,7 @@ func (obj *ctrGuiTable) GetSumCellStr(colIdx int) (string, color.NRGBA) {
 		for _, elem := range obj.filteredList {
 			if elem.Date_completed != 0 {
 				if elem.Date_completed < elem.Date_issued {
-					log.Printf("warning date completed after date issued %d %d", elem.Date_completed, elem.Date_issued)
+					obj.Ctrl.Model.LogObj.Printf("warning date completed after date issued %d %d", elem.Date_completed, elem.Date_issued)
 				} else {
 					timeDiff := elem.Date_completed - elem.Date_issued
 					timeSum += timeDiff

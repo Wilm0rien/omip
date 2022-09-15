@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/util"
 	"github.com/golang-jwt/jwt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -429,11 +429,13 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			}
 		}
 		if expireTime, ok := obj.Esi.CacheEntries[url]; ok {
-			if expireTime > time.Now().Unix()-24*60*60 &&
-				expireTime < time.Now().Unix()+24*60*60 { // check value is plausible = at least older than 24h before now
-				if expireTime > time.Now().Unix() { // check if cacheing is active
+			now := time.Now().Unix()
+			if expireTime > now-24*60*60 &&
+				expireTime < now+24*60*60 { // check value is plausible = at least older than 24h before now
+				if expireTime > now { // check if cacheing is active
 					if bodyBytes != nil {
-						log.Printf("RESP (cached): %d bytes\n", len(bodyBytes))
+						timeDiff := expireTime - now
+						obj.Model.LogObj.Printf("RESP (cached %d seconds left): %d bytes\n", timeDiff, len(bodyBytes))
 						requestOK = true
 						etagTrigger = true
 					}
@@ -445,9 +447,27 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 
 		for !requestOK && retrycounter < 3 {
 			bodyBytes2, clientErr, resp := obj.httpClientRequest(req)
+
+			var serverTime int64
+			var expireTime int64
+			if val, ok := resp.Header["Date"]; ok {
+				if len(resp.Header["Date"]) == 1 {
+					serverTime = util.ConvertServerTimeStrToInt(val[0])
+				}
+			}
+			if val, ok := resp.Header["Expires"]; ok {
+				if len(resp.Header["Expires"]) == 1 {
+					expireTime = util.ConvertServerTimeStrToInt(val[0])
+				}
+			}
+			if serverTime != 0 && expireTime != 0 && expireTime > serverTime {
+				cacheTime := expireTime - serverTime
+				obj.Esi.CacheEntries[url] = time.Now().Unix() + cacheTime
+			}
+
 			if resp.StatusCode == 304 { // https://developers.eveonline.com/blog/article/esi-etag-best-practices
 				bodyBytes = obj.Model.LoadEtag(oldEtag)
-				log.Printf("RESP (cached): %d bytes\n", len(bodyBytes))
+				obj.Model.LogObj.Printf("RESP (ETAG): %d bytes\n", len(bodyBytes))
 				requestOK = true
 				etagTrigger = true
 			} else {
@@ -474,22 +494,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 								Xpages, _ = strconv.Atoi(val[0])
 							}
 						}
-						var serverTime int64
-						var expireTime int64
-						if val, ok := resp.Header["Date"]; ok {
-							if len(resp.Header["Date"]) == 1 {
-								serverTime = util.ConvertServerTimeStrToInt(val[0])
-							}
-						}
-						if val, ok := resp.Header["Expires"]; ok {
-							if len(resp.Header["Expires"]) == 1 {
-								expireTime = util.ConvertServerTimeStrToInt(val[0])
-							}
-						}
-						if serverTime != 0 && expireTime != 0 && expireTime > serverTime {
-							cacheTime := expireTime - serverTime
-							obj.Esi.CacheEntries[url] = time.Now().Unix() + cacheTime
-						}
+
 						if len(bodyBytes2) > 0 {
 							requestOK = true
 							if newEtag, ok := resp.Header["Etag"]; ok {
@@ -560,12 +565,12 @@ var HttpRequestMock func(req *http.Request) (bodyBytes []byte, err error, resp *
 func (obj *Ctrl) httpClientRequest(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
 	if !CtrlTestEnable {
 		client := &http.Client{}
-		log.Printf("REQ:\n%s\n", req.URL)
+		obj.Model.LogObj.Printf("REQ:\n%s\n", req.URL)
 		resp, err = client.Do(req)
 		if err == nil {
 			if resp.StatusCode == http.StatusOK {
-				bodyBytes, _ = ioutil.ReadAll(resp.Body)
-				log.Printf("RESP:\n%s\n", string(bodyBytes))
+				bodyBytes, _ = io.ReadAll(resp.Body)
+				obj.Model.LogObj.Printf("RESP: OK (%d bytes received)\n", len(bodyBytes))
 				resp.Body.Close()
 			}
 		}

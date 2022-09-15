@@ -10,7 +10,6 @@ import (
 	"github.com/Wilm0rien/omip/ctrl"
 	"github.com/Wilm0rien/omip/util"
 	"image/color"
-	"log"
 )
 
 type genericTable struct {
@@ -30,7 +29,7 @@ func (obj *genericTable) GetColHeader(colIdx int) string {
 	if colIdx < len(obj.header) {
 		retval = obj.header[colIdx]
 	} else {
-		log.Printf("GetColHeader invalid colidx %d", colIdx)
+		obj.Ctrl.Model.LogObj.Printf("GetColHeader invalid colidx %d", colIdx)
 	}
 	return retval
 }
@@ -40,7 +39,7 @@ func (obj *genericTable) GetColWidth(colIdx int) float32 {
 	if colIdx < len(obj.colWidth) {
 		retval = obj.colWidth[colIdx]
 	} else {
-		log.Printf("GetColWidth invalid colidx %d", colIdx)
+		obj.Ctrl.Model.LogObj.Printf("GetColWidth invalid colidx %d", colIdx)
 	}
 	return retval
 }
@@ -176,7 +175,7 @@ func (obj *OmipGui) createGenTable2(
 			}
 			outString += "\n"
 		}
-		//log.Printf("%s", outString)
+		//obj.Ctrl.Model.LogObj.Printf("%s", outString)
 		util.ClipboardPaste(outString)
 	})
 	resetFilterBtn := widget.NewButton("Reset Filter", func() {

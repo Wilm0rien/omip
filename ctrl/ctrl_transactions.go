@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
-	"log"
 )
 
 type Transaction struct {
@@ -43,7 +42,7 @@ func (obj *Ctrl) UpdateTransaction(char *EsiChar, corp bool) {
 	var transactionList []Transaction
 	contentError := json.Unmarshal(bodyBytes, &transactionList)
 	if contentError != nil {
-		log.Printf("ERROR reading url %s", url)
+		obj.Model.LogObj.Printf("ERROR reading url %s", url)
 		return
 	}
 	for _, trEntry := range transactionList {

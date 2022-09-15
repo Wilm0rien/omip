@@ -11,7 +11,6 @@ import (
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
 	"image/color"
-	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -117,11 +116,11 @@ func (obj *kmDetailTable) getCellStrFull(rowIdx int, colIdx int, inputList []*km
 				}
 			}
 		} else {
-			log.Printf("getCellStrFull invalid colidx %d", colIdx)
+			obj.Ctrl.Model.LogObj.Printf("getCellStrFull invalid colidx %d", colIdx)
 		}
 
 	} else {
-		log.Printf("getCellStrFull invalid row index %d", rowIdx)
+		obj.Ctrl.Model.LogObj.Printf("getCellStrFull invalid row index %d", rowIdx)
 	}
 
 	return retval
@@ -129,7 +128,7 @@ func (obj *kmDetailTable) getCellStrFull(rowIdx int, colIdx int, inputList []*km
 
 func (obj *kmDetailTable) SelectedFunc() func(id widget.TableCellID) {
 	return func(id widget.TableCellID) {
-		log.Printf("selected row %d col %d", id.Row, id.Col)
+		obj.Ctrl.Model.LogObj.Printf("selected row %d col %d", id.Row, id.Col)
 		if id.Col == KMDTCol3KLink {
 			if id.Row < len(obj.filteredList) {
 				if obj.filteredList[id.Row].zKillOK == model.ZkUnkown {
@@ -144,11 +143,11 @@ func (obj *kmDetailTable) SelectedFunc() func(id widget.TableCellID) {
 					}
 					result := obj.Ctrl.Model.AddKillmailEntry(km)
 					if result != model.DBR_Updated {
-						log.Printf("kmDetailTable warning unexepected result %d", result)
+						obj.Ctrl.Model.LogObj.Printf("kmDetailTable warning unexepected result %d", result)
 					}
 				}
 				if obj.filteredList[id.Row].zKillOK == model.ZkOK {
-					log.Printf("startink link for %d", obj.filteredList[id.Row].kmId)
+					obj.Ctrl.Model.LogObj.Printf("startink link for %d", obj.filteredList[id.Row].kmId)
 					url := fmt.Sprintf("https://zkillboard.com/kill/%d/", obj.filteredList[id.Row].kmId)
 					util.OpenUrl(url)
 				}
@@ -202,7 +201,7 @@ func (obj *kmDetailTable) SortCol(colIdx int) {
 		return retval
 	})
 
-	log.Printf("sorty by col %d", colIdx)
+	obj.Ctrl.Model.LogObj.Printf("sorty by col %d", colIdx)
 }
 
 func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fyne.CanvasObject, result bool) {
@@ -305,10 +304,10 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 						outText = util.HumanizeNumber(filteredList.ValCharPerMon[charName][dateStr])
 						color = util.GetColor(filteredList.MaxInMonth[dateStr], filteredList.ValCharPerMon[charName][dateStr], true)
 					} else {
-						//log.Printf("warning %s %s does not exist in ilteredList.ValCharPerMon", charName, dateStr)
+						//obj.Ctrl.Model.LogObj.Printf("warning %s %s does not exist in ilteredList.ValCharPerMon", charName, dateStr)
 					}
 				} else {
-					log.Printf("warning %s does not exist in ilteredList.ValCharPerMon", charName)
+					obj.Ctrl.Model.LogObj.Printf("warning %s does not exist in ilteredList.ValCharPerMon", charName)
 				}
 			}
 			text.Text = outText
@@ -328,7 +327,7 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 			start := time.Now()
 			charName := filteredCharList[id.Row]
 			if id.Col == 0 {
-				log.Printf("%s", charName)
+				obj.Ctrl.Model.LogObj.Printf("%s", charName)
 			} else {
 				monthIdx := maxMonth - id.Col
 				year, month, _ := ymStrPastMonth(monthIdx)
@@ -344,7 +343,7 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 					}
 				}
 				if !windowFound {
-					log.Printf("%s %d start %d end %d", charName, nameMapping[charName], startTime.Unix(), endTime.Unix())
+					obj.Ctrl.Model.LogObj.Printf("%s %d start %d end %d", charName, nameMapping[charName], startTime.Unix(), endTime.Unix())
 					list := obj.Ctrl.Model.GetVictimData(char.CharInfoExt.CooperationId, nameMapping[charName], startTime.Unix(), endTime.Unix())
 					if len(list) > 0 {
 						kmDT := NewKMDT(obj.Ctrl)
@@ -383,7 +382,7 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 							}
 							if found {
 								wList = append(wList[:foundIdx], wList[foundIdx+1:]...)
-								log.Printf("removing %s", w.Title())
+								obj.Ctrl.Model.LogObj.Printf("removing %s", w.Title())
 							}
 						})
 					}
@@ -392,7 +391,7 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 
 			}
 			elapsed := time.Since(start)
-			log.Printf("tableObj.OnSelected took %s", elapsed)
+			obj.Ctrl.Model.LogObj.Printf("tableObj.OnSelected took %s", elapsed)
 		}
 
 	}

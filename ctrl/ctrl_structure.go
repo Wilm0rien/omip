@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
-	"log"
 	"time"
 )
 
@@ -54,7 +53,7 @@ func (obj *Ctrl) UpdateStructures(char *EsiChar, corp bool) {
 		url := fmt.Sprintf("https://esi.evetech.net/v4/corporations/%d/structures/?datasource=tranquility", char.CharInfoExt.CooperationId)
 		bodyBytes, _ := obj.getSecuredUrl(url, char)
 		var structinfo []structInfo
-		//log.Printf("%s\n", string(bodyBytes))
+		//obj.Model.LogObj.Printf("%s\n", string(bodyBytes))
 		contentError := json.Unmarshal(bodyBytes, &structinfo)
 		corpInfo2 := obj.GetCorp(char)
 		if corpInfo2 != nil {
@@ -86,7 +85,7 @@ func (obj *Ctrl) GetStructureNameFromEsi(char *EsiChar, structureId int64) (retv
 			retval = structName2.Name
 		}
 	} else {
-		obj.AddLogEntry(fmt.Sprintf("GetStructureNameFromEsi %s ERROR reading corp info",char.CharInfoData.CharacterName))
+		obj.AddLogEntry(fmt.Sprintf("GetStructureNameFromEsi %s ERROR reading corp info", char.CharInfoData.CharacterName))
 	}
 
 	return retval
@@ -127,7 +126,7 @@ func (obj *Ctrl) processStructInfo(structinfo []structInfo, corp *EsiCorp, char 
 
 		result := obj.Model.AddStructureInfoEntry(dbStruct)
 		if result == model.DBR_Undefined {
-			log.Printf("unexpetcted return code")
+			obj.Model.LogObj.Printf("unexpetcted return code")
 		}
 		strucName, _ := obj.Model.GetStringEntry(dbStruct.NameRef)
 		obj.processStructServices(elem.Services, elem.StructureID, corp, strucName, newStructure)
@@ -140,9 +139,9 @@ func (obj *Ctrl) processStructInfo(structinfo []structInfo, corp *EsiCorp, char 
 		}
 	}
 	corpStructures := obj.Model.GetCorpStructures(char.CharInfoExt.CooperationId)
-	ticker:="N/A"
-	corpObj:=obj.GetCorp(char)
-	if corpObj!=nil {
+	ticker := "N/A"
+	corpObj := obj.GetCorp(char)
+	if corpObj != nil {
 		ticker = corpObj.Ticker
 	}
 	for _, corpStruc := range corpStructures {
@@ -169,7 +168,7 @@ func (obj *Ctrl) processStructServices(services []structServices, structId int64
 		if dbResult == model.DBR_Updated || dbResult == model.DBR_Inserted && !newStructure {
 			obj.AddLogEntry(fmt.Sprintf("[%s] %s - %s %s", corp.Ticker, nameStr, service.Name, service.State))
 		} else if dbResult == model.DBR_Undefined {
-			log.Printf("WARNING: processEsiStructServices unexpected result")
+			obj.Model.LogObj.Printf("WARNING: processEsiStructServices unexpected result")
 		}
 	}
 	// remove deleted services from DB
@@ -188,7 +187,7 @@ func (obj *Ctrl) processStructServices(services []structServices, structId int64
 			if result {
 				obj.AddLogEntry(fmt.Sprintf("[%s] %s removed %s", corp.Ticker, nameStr, serviceNameString))
 			} else {
-				log.Printf("WARNING FAILED TO delete service %d from structure %s\n", structId, serviceNameString)
+				obj.Model.LogObj.Printf("WARNING FAILED TO delete service %d from structure %s\n", structId, serviceNameString)
 			}
 		}
 	}

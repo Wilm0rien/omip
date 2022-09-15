@@ -23,7 +23,7 @@ func TestGui(t *testing.T) {
 
 	//test.TapCanvas(gui.WindowPtr.Canvas(), gui.TabPtr.Position())
 	//test.TapCanvas(gui.WindowPtr.Canvas(), gui.CorpTabPtr.Position())
-	log.Printf("%v", gui.TabPtr.Items[1])
+	obj.Ctrl.Model.LogObj.Printf("%v", gui.TabPtr.Items[1])
 	test.TapCanvas(gui.WindowPtr.Canvas(), fyne.Position{60, 170})
 	test.TapCanvas(gui.WindowPtr.Canvas(), fyne.Position{314, 165})
 
@@ -57,6 +57,6 @@ func TestGui(t *testing.T) {
 		t.Error("expected tab in my characters")
 	}
 
-	log.Printf("UpdateGui took %s", elapsed)
+	obj.Ctrl.Model.LogObj.Printf("UpdateGui took %s", elapsed)
 	modelObj.CloseDB()
 }

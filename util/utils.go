@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -409,13 +410,21 @@ func ConvertTimeStrToInt(timeString string) int64 {
 func ConvertServerTimeStrToInt(timeString string) int64 {
 	var retval int64
 	if timeString != "" {
-		t, err := time.Parse("Wed, 02 Jan 2006 15:04:05 GMT", timeString)
-		if err != nil {
-			fmt.Println(err)
-			log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
+		re := regexp.MustCompile(`^[A-Za-z]+, ([0-9]+ [a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[0-9]+) GMT$`)
+		result := re.FindStringSubmatch(timeString)
+		if len(result) > 1 {
+			subString := fmt.Sprintf("%s", result[1])
+			t, err := time.Parse("02 Jan 2006 15:04:05", subString)
+			if err != nil {
+				fmt.Println(err)
+				log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
+			} else {
+				retval = t.Unix()
+			}
 		} else {
-			retval = t.Unix()
+			log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
 		}
+
 	}
 	return retval
 }

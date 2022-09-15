@@ -89,7 +89,7 @@ func (obj *Ctrl) UpdateIndustryInDb(char *EsiChar, corp bool, jobList []JobInfos
 		result := obj.Model.AddJobEntry(dbJob)
 		if obj.Model.GetStructureName(dbJob.FacilityId) == nil {
 			if dbJob.FacilityId < 100000000 {
-				//log.Printf("invalid station id %d for jobid %d", dbJob.StationId, dbJob.JobId)
+				//obj.Model.LogObj.Printf("invalid station id %d for jobid %d", dbJob.StationId, dbJob.JobId)
 			} else {
 				obj.GetStructureNameFromEsi(char, dbJob.FacilityId)
 			}
