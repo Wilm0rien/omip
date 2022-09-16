@@ -17,12 +17,10 @@ import (
 	"github.com/Wilm0rien/omip/util"
 	"image/color"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"runtime"
 	"time"
 )
@@ -88,9 +86,9 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 			}),
 
 			fyne.NewMenuItem("Check for Update", func() {
-				asset := update.GetRelease(updateUrl)
+				asset, TagName := update.GetRelease(updateUrl, `omip_updater\.zip$`)
 
-				d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(asset.TagName, version), obj.WindowPtr)
+				d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(TagName, version, asset), obj.WindowPtr)
 				d.Show()
 
 			}),
@@ -175,26 +173,69 @@ func (obj *OmipGui) makeBottomStatus() (result fyne.CanvasObject) {
 	return newBottomGrid
 }
 
-func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string) (result fyne.CanvasObject) {
+func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, asset *update.GitAssets) (result fyne.CanvasObject) {
 	var msg string
-	ex, _ := os.Executable()
-	exPath := filepath.Dir(ex)
-	updater := path.Join(exPath, "omip_updater.exe")
-	if !util.Exists(updater) {
-		msg = fmt.Sprintf("ERROR updater executable not found at %s", ex)
+	updaterExe := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.exe")
+	updaterZip := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.zip")
+	if util.Exists(updaterExe) {
+		switch runtime.GOOS {
+		case "linux":
+			msg = fmt.Sprintf("TODO LINUX Update not implemented")
+		case "windows":
+			arguments := fmt.Sprintf(`--version`)
+			cmd := exec.Command(updaterExe, arguments)
+			output, execErr2 := cmd.Output()
+			if execErr2 != nil {
+				obj.Ctrl.Model.LogObj.Printf("error starting process %s", updaterExe)
+			} else {
+				versionStr := string(output)
+				if versionStr != newVersion {
+					obj.Ctrl.Model.LogObj.Printf("detected old version %s of updater, removing %s", versionStr, updaterExe)
+					os.Remove(updaterExe)
+				}
+			}
+		}
+	}
+	if !util.Exists(updaterExe) {
+		if asset == nil {
+			msg = fmt.Sprintf("ERROR updater not found on github")
+		} else {
+			updateObj := update.NewUpdaterObj()
+			downLoadErr := updateObj.DownloadFile(updaterZip, asset.Url, asset.FileSize)
+			if downLoadErr != nil {
+				obj.Ctrl.Model.LogObj.Printf("updated failed while downloading %s", downLoadErr.Error())
+			} else {
+				obj.Ctrl.Model.LogObj.Printf("downloaded %s, extracting to %s", updaterZip, updaterExe)
+				extractErr := updateObj.ExtractExec(updaterZip, obj.Ctrl.Model.LocalDir)
+				if extractErr != nil {
+					obj.Ctrl.Model.LogObj.Printf("update failed while extracting %s", extractErr.Error())
+				} else {
+					if err := os.Remove(updaterZip); err != nil {
+						obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("failed erasing zip file %s %s", updaterZip, err.Error()))
+					}
+					obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("downloaded %s", updaterExe))
+				}
+			}
+		}
+	}
+
+	if !util.Exists(updaterExe) {
+		msg = fmt.Sprintf("ERROR updater executable not found at %s", updaterExe)
 	} else {
+		ex, _ := os.Executable()
 		if newVersion == currentVersion {
-			msg = fmt.Sprintf("software is up to date %s current %s", newVersion, ex)
+			msg = fmt.Sprintf("software is up to date %s current %s", newVersion, currentVersion)
 		} else {
 			switch runtime.GOOS {
 			case "linux":
 				msg = fmt.Sprintf("TODO LINUX Update not implemented")
 			case "windows":
-				arguments := fmt.Sprintf(`/k %s --target=%s`, updater, ex)
+
+				arguments := fmt.Sprintf(`/k %s --target=%s`, updaterExe, ex)
 				cmd := exec.Command("cmd", arguments)
 				execErr2 := cmd.Start()
 				if execErr2 != nil {
-					log.Fatalf("error starting process %s", updater)
+					obj.Ctrl.Model.LogObj.Printf("error starting process %s", updaterExe)
 				} else {
 					obj.WindowPtr.Close()
 				}
@@ -456,12 +497,12 @@ func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
 	obj.NotifyEntry = entryMultiLine
 	obj.Progress = widget.NewProgressBar()
 	obj.Progress.Hide()
-	asset := update.GetRelease(updateUrl)
+	asset, TagName := update.GetRelease(updateUrl, `omip\.zip$`)
 	if asset == nil {
 		obj.Ctrl.AddLogEntry(fmt.Sprintf("ERROR could not read update url %s", updateUrl))
 	} else {
-		if asset.TagName != obj.Version {
-			obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", asset.TagName))
+		if TagName != obj.Version {
+			obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", TagName))
 		}
 	}
 	return container.NewBorder(nil, obj.Progress, nil, nil, scroll)

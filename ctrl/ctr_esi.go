@@ -440,7 +440,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 				if expireTime > now { // check if cacheing is active
 					if bodyBytes != nil {
 						timeDiff := expireTime - now
-						obj.Model.LogObj.Printf("REQ: %s\n", req)
+						obj.Model.LogObj.Printf("REQ: %s\n", req.URL)
 						obj.Model.LogObj.Printf("RESP (cached %d seconds left): %d bytes\n", timeDiff, len(bodyBytes))
 						requestOK = true
 						etagTrigger = true

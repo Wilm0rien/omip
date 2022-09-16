@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Wilm0rien/omip/util"
 	_ "github.com/mattn/go-sqlite3"
@@ -61,15 +62,28 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName
 	if !util.Exists(obj.LocalDir) {
-		util.CreateDirectory(obj.LocalDir)
+		if !util.CreateDirectory(obj.LocalDir) {
+			msg := fmt.Sprintf("CreateDirectory failed %s", obj.LocalDir)
+			util.CheckErr(errors.New(msg))
+			log.Fatalf(msg)
+		}
 	}
 	obj.LocalImgDir = obj.LocalDir + "/" + "images"
 	if !util.Exists(obj.LocalImgDir) {
-		util.CreateDirectory(obj.LocalImgDir)
+		if !util.CreateDirectory(obj.LocalImgDir) {
+			msg := fmt.Sprintf("CreateDirectory failed %s", obj.LocalImgDir)
+			util.CheckErr(errors.New(msg))
+			log.Fatalf(msg)
+		}
+
 	}
 	obj.LocalEtagCache = obj.LocalDir + "/" + "etags"
 	if !util.Exists(obj.LocalEtagCache) {
-		util.CreateDirectory(obj.LocalEtagCache)
+		if !util.CreateDirectory(obj.LocalEtagCache) {
+			msg := fmt.Sprintf("CreateDirectory failed %s", obj.LocalImgDir)
+			util.CheckErr(errors.New(msg))
+			log.Fatalf(msg)
+		}
 	}
 	obj.LocalSqlDb = obj.LocalDir + "/" + ldbName
 
@@ -205,6 +219,7 @@ func (obj *Model) createNewDb(dbname string) {
 
 	if err != nil {
 		fmt.Println(err)
+		util.CheckErr(err)
 		panic("cannot open db")
 	}
 	obj.DB = db

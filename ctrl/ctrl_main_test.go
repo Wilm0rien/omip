@@ -72,7 +72,7 @@ func TestInit(t *testing.T) {
 		time.Sleep(400 * time.Millisecond)
 	}
 	elapsed := time.Since(start)
-	obj.Model.LogObj.Printf("UpdateGui took %s", elapsed)
+	log.Printf("UpdateGui took %s", elapsed)
 	ctrlObj.StartServer()
 	time.Sleep(500 * time.Millisecond)
 	urlStr := fmt.Sprintf("http://127.0.0.1:4716/callback?code=your-code-here&state=1628332218")
@@ -606,7 +606,7 @@ func TestJournal(t *testing.T) {
 		resp = &http.Response{
 			StatusCode: http.StatusNotFound,
 		}
-		obj.Model.LogObj.Printf(req.URL.String())
+		log.Printf(req.URL.String())
 		switch req.URL.String() {
 		case "https://esi.evetech.net/v1/characters/2115636466/wallet/transactions/?datasource=tranquility":
 			bodyBytes = []byte(fmt.Sprintf(`[%s]`, transaction))

@@ -20,9 +20,14 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"time"
+)
+
+const (
+	OmipSoftwareVersion = "0.0.12"
 )
 
 func Assert(value bool) {
@@ -46,7 +51,7 @@ func CreateDirectory(dirName string) bool {
 	if os.IsNotExist(err) {
 		errDir := os.MkdirAll(dirName, 0755)
 		if errDir != nil {
-			panic(err)
+			return false
 		}
 		return true
 	}
@@ -389,7 +394,9 @@ func OpenUrl(url string) {
 func CheckErr(err error) {
 	if err != nil {
 		log.Printf("%v", err)
-		panic(err)
+		msg := fmt.Sprintf("%v\n", err)
+		msg += fmt.Sprintf(string(debug.Stack()))
+		os.WriteFile("err_stack_trace.log", []byte(msg), 0644)
 	}
 }
 
@@ -484,7 +491,7 @@ func SendReq(urlStr string) (retval bool) {
 	if err1 != nil {
 		log.Printf("failed creating request %s", err1.Error())
 	}
-	client.Timeout = 10 * time.Millisecond
+	client.Timeout = 1000 * time.Millisecond
 	resp, err2 := client.Do(req)
 
 	if err2 != nil {

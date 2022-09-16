@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"fyne.io/fyne/v2/app"
@@ -14,11 +15,13 @@ import (
 var testEnableFlag = flag.Bool("test", false, "enable tests")
 var debugEnableFlag = flag.Bool("debug", false, "enable debug tab")
 
-const (
-	WxsProductVersion = "0.0.11"
-)
-
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			msg := fmt.Sprintf("panic happend %v", r)
+			util.CheckErr(errors.New(msg))
+		}
+	}()
 	flag.Parse()
 	// kill existing instance
 	urlStrShutdown := fmt.Sprintf("http://localhost:4716/callback?code=shutdown&state=0")
@@ -30,7 +33,7 @@ func main() {
 	ctrlObj.StartServer()
 	loadErr := ctrlObj.Load(ctrl.ConfigFileName, *testEnableFlag)
 	app := app.New()
-	gui := view.NewOmipGui(ctrlObj, app, *debugEnableFlag, WxsProductVersion)
+	gui := view.NewOmipGui(ctrlObj, app, *debugEnableFlag, util.OmipSoftwareVersion)
 	gui.WindowPtr.Show()
 	gui.UpdateGui()
 	if loadErr != nil {
@@ -42,4 +45,5 @@ func main() {
 		ctrlObj.HTTPShutdown()
 	}
 	modelObj.CloseDB()
+
 }
