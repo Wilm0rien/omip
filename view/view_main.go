@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"path"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -35,6 +36,7 @@ type WindowList struct {
 	Title string
 	wRef  fyne.Window
 }
+type UpdateFunc func(char *ctrl.EsiChar, corp bool)
 
 type OmipGui struct {
 	Ctrl        *ctrl.Ctrl
@@ -48,6 +50,13 @@ type OmipGui struct {
 	NotifyText  string
 	DebugFlag   bool
 	Version     string
+	Up          EsiUpdate
+}
+
+type EsiUpdate struct {
+	UpdateFuncList []UpdateFunc
+	UpdateMutex    sync.Mutex
+	JobList        []string
 }
 
 func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *OmipGui {
@@ -58,6 +67,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 	obj.Ctrl.AuthCb = obj.AddEsiKey
 	obj.Ctrl.AddLogCB = obj.AddLogEntry
 	obj.AppPtr = app
+	obj.populateUpdateFuncList()
 	obj.AppPtr.SetIcon(resourceLogoPng)
 	menu := fyne.NewMainMenu(
 		fyne.NewMenu("File",
@@ -268,6 +278,21 @@ For third party licenses see link below:
 	return container.NewVBox(omip, thirdPartyUrl)
 }
 
+func (obj *OmipGui) populateUpdateFuncList() {
+	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
+	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateContracts)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateContractItems)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateIndustry)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateKillMails)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateWallet)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateCorpMembers)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateStructures)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateNotifications)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateTransaction)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateOrders)
+}
+
 func (obj *OmipGui) UpdateAllData() {
 	if len(obj.Ctrl.Esi.EsiCharList) == 0 {
 		err := errors.New("no characters registered to update data")
@@ -291,20 +316,9 @@ func (obj *OmipGui) UpdateAllData() {
 	obj.Ctrl.Model.AddDebounceEntry("update_string")
 	prog := obj.Progress
 	go func() {
-		type UpdateFunc func(char *ctrl.EsiChar, corp bool)
-		Updates := make([]UpdateFunc, 0, 5)
-		Updates = append(Updates, obj.Ctrl.UpdateContracts)
-		Updates = append(Updates, obj.Ctrl.UpdateContractItems)
-		Updates = append(Updates, obj.Ctrl.UpdateIndustry)
-		Updates = append(Updates, obj.Ctrl.UpdateKillMails)
-		Updates = append(Updates, obj.Ctrl.UpdateWallet)
-		Updates = append(Updates, obj.Ctrl.UpdateCorpMembers)
-		Updates = append(Updates, obj.Ctrl.UpdateStructures)
-		Updates = append(Updates, obj.Ctrl.UpdateNotifications)
-		Updates = append(Updates, obj.Ctrl.UpdateTransaction)
-		Updates = append(Updates, obj.Ctrl.UpdateOrders)
-		jobList := []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
-		totalItems := (len(obj.Ctrl.Esi.EsiCharList) + len(obj.Ctrl.Esi.EsiCorpList) + 1) * len(Updates)
+		obj.Up.UpdateMutex.Lock()
+		defer obj.Up.UpdateMutex.Unlock()
+		totalItems := (len(obj.Ctrl.Esi.EsiCharList) + len(obj.Ctrl.Esi.EsiCorpList) + 1) * len(obj.Up.UpdateFuncList)
 		// add 1 journal request per character and 7 journal requests per corp
 		totalItems += len(obj.Ctrl.Esi.EsiCharList) + (len(obj.Ctrl.Esi.EsiCorpList) * 7)
 		var itemCount int
@@ -312,12 +326,13 @@ func (obj *OmipGui) UpdateAllData() {
 			obj.Ctrl.UpdateMarket(obj.Ctrl.Esi.EsiCharList[0], false)
 		}
 		for _, char := range obj.Ctrl.Esi.EsiCharList {
+			itemCount++
 			// NOTE: the journal has to be updated first to update the journal_links table
 			// this is because only contracts with journal links are identified as relevant for being stored
 			obj.Ctrl.UpdateJournal(char, false, 0)
-			itemCount++
-			for idx, updateFunc := range Updates {
-				obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, jobList[idx]))
+
+			for idx, updateFunc := range obj.Up.UpdateFuncList {
+				obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
 				updateFunc(char, false)
 				itemCount++
 				prog.SetValue(float64(itemCount) / float64(totalItems))
@@ -328,8 +343,8 @@ func (obj *OmipGui) UpdateAllData() {
 		for _, corp := range obj.Ctrl.Esi.EsiCorpList {
 			director := obj.Ctrl.GetCorpDirector(corp.CooperationId)
 			if director != nil {
-				for idx, updateFunc := range Updates {
-					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, jobList[idx]))
+				for idx, updateFunc := range obj.Up.UpdateFuncList {
+					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
 					updateFunc(director, true)
 					itemCount++
 					prog.SetValue(float64(itemCount) / float64(totalItems))
@@ -340,38 +355,37 @@ func (obj *OmipGui) UpdateAllData() {
 					itemCount++
 					prog.SetValue(float64(itemCount) / float64(totalItems))
 				}
-				/* TODO remove adash
-					if _, ok := obj.Ctrl.ADash[corp.CooperationId]; !ok {
-						if obj.Ctrl.Model.ADashAuthExists(corp.CooperationId) {
-							email, pw, _ := obj.Ctrl.Model.GetAuth(corp.CooperationId)
-							ticker := obj.Ctrl.Model.GetCorpTicker(corp.CooperationId)
-							obj.Ctrl.ADash[corp.CooperationId] = ctrl.NewADashClient(email, pw, ticker, obj.Ctrl.Model, corp.CooperationId)
-							obj.Ctrl.ADash[corp.CooperationId].AddLogCB = obj.Ctrl.AddLogEntry
-							obj.Ctrl.ADash[corp.CooperationId].Username = email
-							obj.Ctrl.ADash[corp.CooperationId].Password = pw
-						}
-					}
-
-				if aDash, ok := obj.Ctrl.ADash[corp.CooperationId]; ok {
-					if aDash.Username != "test@example.com" && aDash.Password != "" {
-						if aDash.Login() {
-							aDash.GetPapLinks()
-							itemCount++
-							prog.SetValue(float64(itemCount) / float64(totalItems))
-						} else {
-							obj.AddLogEntry("Adash Login failed")
-						}
-					}
-				}
-				*/
 			}
 		}
+
 		prog.SetValue(1)
 		obj.UpdateGui()
 		prog.Hide()
 	}()
 	prog.Show()
+}
 
+func (obj *OmipGui) UpdateChar(char *ctrl.EsiChar) {
+	obj.Up.UpdateMutex.Lock()
+	defer obj.Up.UpdateMutex.Unlock()
+	obj.Ctrl.UpdateJournal(char, false, 0)
+	for idx, updateFunc := range obj.Up.UpdateFuncList {
+		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
+		updateFunc(char, false)
+	}
+}
+func (obj *OmipGui) UpdateCorp(director *ctrl.EsiChar) {
+	obj.Up.UpdateMutex.Lock()
+	corp := obj.Ctrl.GetCorp(director)
+	defer obj.Up.UpdateMutex.Unlock()
+	for idx, updateFunc := range obj.Up.UpdateFuncList {
+		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
+		updateFunc(director, true)
+	}
+	for i := 1; i <= 7; i++ {
+		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
+		obj.Ctrl.UpdateJournal(director, true, i)
+	}
 }
 
 func (obj *OmipGui) UpdateGui() {
@@ -478,17 +492,19 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 }
 
 func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
-	obj.UpdateGui()
+	obj.UpdateChar(char)
 	if char.CharInfoExt.Director {
 		corp := obj.Ctrl.GetCorp(char)
 		if corp != nil {
 			obj.AddLogEntry(fmt.Sprintf("added %s director of %s", char.CharInfoData.CharacterName, corp.Name))
+			obj.UpdateCorp(char)
 		} else {
 			obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 		}
 	} else {
 		obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 	}
+	obj.UpdateGui()
 }
 
 func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
