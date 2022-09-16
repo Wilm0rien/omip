@@ -492,7 +492,9 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 }
 
 func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
+	obj.AddLogEntry("Update Initiated! Please Wait!")
 	obj.UpdateChar(char)
+
 	if char.CharInfoExt.Director {
 		corp := obj.Ctrl.GetCorp(char)
 		if corp != nil {
@@ -505,6 +507,7 @@ func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
 		obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 	}
 	obj.UpdateGui()
+	obj.AddLogEntry("Update Finished!")
 }
 
 func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
