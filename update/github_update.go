@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/util"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,41 +15,6 @@ import (
 )
 
 type Updater struct {
-	LocalDir       string
-	ExecDir        string
-	TmpZipFullPath string
-	TmpExeFullPath string
-}
-
-func NewUpdater(AppName string, TmpZip string) (result *Updater) {
-	var obj Updater
-	appData := util.GetAppDataDir()
-	obj.LocalDir = appData + "/" + AppName
-	if !util.Exists(obj.LocalDir) {
-		util.CreateDirectory(obj.LocalDir)
-	}
-	obj.TmpZipFullPath = obj.LocalDir + "/" + TmpZip
-	if util.Exists(obj.TmpZipFullPath) {
-		removeErr := os.Remove(obj.TmpZipFullPath)
-		if removeErr != nil {
-			log.Printf("error removing zip file: %s %s", obj.TmpZipFullPath, removeErr.Error())
-			return nil
-		}
-	}
-	obj.TmpExeFullPath = obj.LocalDir + "/" + AppName + ".exe"
-	if util.Exists(obj.TmpExeFullPath) {
-		removeErr := os.Remove(obj.TmpExeFullPath)
-		if removeErr != nil {
-			log.Printf("error removing tmp exe file: %s %s", obj.TmpExeFullPath, removeErr.Error())
-			return nil
-		}
-	}
-	ex, err := os.Executable()
-	if err == nil {
-		obj.ExecDir = filepath.Dir(ex)
-	}
-
-	return &obj
 }
 
 func NewUpdaterObj() (result *Updater) {
