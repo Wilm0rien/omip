@@ -206,8 +206,8 @@ func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, a
 			case "linux":
 				msg = fmt.Sprintf("TODO LINUX Update not implemented")
 			case "windows":
-				if dlErr := obj.DownloadUpdate(newOmipZip); dlErr == nil {
-					msg = fmt.Sprintf("failed to download omip.zip")
+				if dlErr := obj.DownloadUpdate(newOmipZip); dlErr != nil {
+					msg = fmt.Sprintf("failed to download omip.zip %s", dlErr.Error())
 				} else {
 					arguments := fmt.Sprintf(`/k %s --target=%s --source=%s`, updaterExe, ex, newOmipZip)
 					cmd := exec.Command("cmd", arguments)
