@@ -187,46 +187,12 @@ func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, a
 	var msg string
 	updaterExe := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.exe")
 	updaterZip := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.zip")
+	newOmipZip := path.Join(obj.Ctrl.Model.LocalDir, "omip.zip")
 	if util.Exists(updaterExe) {
-		switch runtime.GOOS {
-		case "linux":
-			msg = fmt.Sprintf("TODO LINUX Update not implemented")
-		case "windows":
-			arguments := fmt.Sprintf(`--version`)
-			cmd := exec.Command(updaterExe, arguments)
-			output, execErr2 := cmd.Output()
-			if execErr2 != nil {
-				obj.Ctrl.Model.LogObj.Printf("error starting process %s", updaterExe)
-			} else {
-				versionStr := string(output)
-				if versionStr != newVersion {
-					obj.Ctrl.Model.LogObj.Printf("detected old version %s of updater, removing %s", versionStr, updaterExe)
-					os.Remove(updaterExe)
-				}
-			}
-		}
+		obj.RemoveOldUpdater(updaterExe, newVersion)
 	}
 	if !util.Exists(updaterExe) {
-		if asset == nil {
-			msg = fmt.Sprintf("ERROR updater not found on github")
-		} else {
-			updateObj := update.NewUpdaterObj()
-			downLoadErr := updateObj.DownloadFile(updaterZip, asset.Url, asset.FileSize)
-			if downLoadErr != nil {
-				obj.Ctrl.Model.LogObj.Printf("updated failed while downloading %s", downLoadErr.Error())
-			} else {
-				obj.Ctrl.Model.LogObj.Printf("downloaded %s, extracting to %s", updaterZip, updaterExe)
-				extractErr := updateObj.ExtractExec(updaterZip, obj.Ctrl.Model.LocalDir)
-				if extractErr != nil {
-					obj.Ctrl.Model.LogObj.Printf("update failed while extracting %s", extractErr.Error())
-				} else {
-					if err := os.Remove(updaterZip); err != nil {
-						obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("failed erasing zip file %s %s", updaterZip, err.Error()))
-					}
-					obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("downloaded %s", updaterExe))
-				}
-			}
-		}
+		obj.DownLoadUpdater(updaterExe, updaterZip, asset)
 	}
 
 	if !util.Exists(updaterExe) {
@@ -240,18 +206,20 @@ func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, a
 			case "linux":
 				msg = fmt.Sprintf("TODO LINUX Update not implemented")
 			case "windows":
-
-				arguments := fmt.Sprintf(`/k %s --target=%s`, updaterExe, ex)
-				cmd := exec.Command("cmd", arguments)
-				execErr2 := cmd.Start()
-				if execErr2 != nil {
-					obj.Ctrl.Model.LogObj.Printf("error starting process %s", updaterExe)
+				if dlErr := obj.DownloadUpdate(newOmipZip); dlErr == nil {
+					msg = fmt.Sprintf("failed to download omip.zip")
 				} else {
-					obj.WindowPtr.Close()
+					arguments := fmt.Sprintf(`/k %s --target=%s --source=%s`, updaterExe, ex, newOmipZip)
+					cmd := exec.Command("cmd", arguments)
+					execErr2 := cmd.Start()
+					if execErr2 != nil {
+						msg = fmt.Sprintf("error starting process %s", updaterExe)
+						obj.Ctrl.Model.LogObj.Printf(msg)
+					} else {
+						obj.WindowPtr.Close()
+					}
 				}
 			}
-			msg = fmt.Sprintf("a new update has been found %s current %s", newVersion, ex)
-
 		}
 	}
 
@@ -363,6 +331,58 @@ func (obj *OmipGui) UpdateAllData() {
 		prog.Hide()
 	}()
 	prog.Show()
+}
+
+func (obj *OmipGui) RemoveOldUpdater(updaterExe string, newVersion string) {
+	switch runtime.GOOS {
+	case "linux":
+		obj.Ctrl.AddLogEntry("ERROR LINUX Update not implemented")
+	case "windows":
+		arguments := fmt.Sprintf(`--version`)
+		cmd := exec.Command(updaterExe, arguments)
+		output, execErr2 := cmd.Output()
+		if execErr2 != nil {
+			obj.Ctrl.Model.LogObj.Printf("error starting process %s", updaterExe)
+		} else {
+			versionStr := string(output)
+			if versionStr != newVersion {
+				obj.Ctrl.Model.LogObj.Printf("detected old version %s of updater, removing %s", versionStr, updaterExe)
+				err := os.Remove(updaterExe)
+				if err != nil {
+					obj.Ctrl.AddLogEntry(fmt.Sprintf("%s", err.Error()))
+				}
+			}
+		}
+	}
+}
+
+func (obj *OmipGui) DownLoadUpdater(updaterExe string, updaterZip string, asset *update.GitAssets) {
+	if asset == nil {
+		obj.Ctrl.AddLogEntry("ERROR updater not found on github")
+	} else {
+		updateObj := update.NewUpdaterObj()
+		downLoadErr := updateObj.DownloadFile(updaterZip, asset.Url, asset.FileSize)
+		if downLoadErr != nil {
+			obj.Ctrl.Model.LogObj.Printf("updated failed while downloading %s", downLoadErr.Error())
+		} else {
+			obj.Ctrl.Model.LogObj.Printf("downloaded %s, extracting to %s", updaterZip, updaterExe)
+			extractErr := updateObj.ExtractExec(updaterZip, obj.Ctrl.Model.LocalDir)
+			if extractErr != nil {
+				obj.Ctrl.Model.LogObj.Printf("update failed while extracting %s", extractErr.Error())
+			} else {
+				if err := os.Remove(updaterZip); err != nil {
+					obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("failed erasing zip file %s %s", updaterZip, err.Error()))
+				}
+				obj.Ctrl.Model.LogObj.Printf(fmt.Sprintf("downloaded %s", updaterExe))
+			}
+		}
+	}
+}
+
+func (obj *OmipGui) DownloadUpdate(newOmipZip string) (err error) {
+	updateObj := update.NewUpdaterObj()
+	asset, _ := update.GetRelease(updateUrl, `omip\.zip$`)
+	return updateObj.DownloadFile(newOmipZip, asset.Url, asset.FileSize)
 }
 
 func (obj *OmipGui) UpdateChar(char *ctrl.EsiChar) {
@@ -492,6 +512,7 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 }
 
 func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
+	obj.TabPtr.SelectIndex(0)
 	obj.AddLogEntry("Update Initiated! Please Wait!")
 	obj.UpdateChar(char)
 
@@ -507,6 +528,7 @@ func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
 		obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 	}
 	obj.UpdateGui()
+	obj.TabPtr.SelectIndex(0)
 	obj.AddLogEntry("Update Finished!")
 }
 
