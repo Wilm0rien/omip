@@ -3,102 +3,111 @@
 OMIP - An Eve Online Data Aggregator
 
 
-## Quick Reference
-1. Download the MSI installer via the 
-   [release link](https://github.com/Wilm0rien/omip/releases/) 
-2. You will get a blue "Windows Protected your PC" screen when starting the 
-   installer. You may ignore this warning or follow the instructions in the FAQ 
-   below to build the tool from sources.
-3. After installing click "Add Character..." in the File Menu to add a director 
-4. Uncheck Items in the ESI Keys Tab to safe time if you are not interested in
-   certain info.
-5. Click "Update All Data..." in the file Menu to load the info from 
-   [esi.evetech.net](https://esi.evetech.net/)
-6. If you added a director the Corporations Tab will show the corporation
-7. If you are an Imperium Director you may click on "Login to aDashboard" in the
-   Overview Tab of your corporation to get the PAP statistic
+## Getting Started
+
+![image](https://user-images.githubusercontent.com/20628481/190867641-e7166a31-fae0-461e-b4cf-9753ab165754.png)
+
+* to register an ESI key for a character or corporation select "Add Character" in the file menu <2>
+  * this will open the Authentification screen in a browser window
+  * if you want to add a corporation just choose a character who is a director. In this way the character and the corporation will be registered
+  * adding a character or corporation will automatically trigger an update for it
+* to fetch latest data from the eve server select "Update all data" in the file menu <3>
+  * you can only do this every 5mins to avoid flooding the server.
 
 
-## Security Features
+## Notifications
 
-* OMIP is a program which runs natively on your computer (Linux or Windows)
-* No data is stored outside your computer
-* Only the following servers are contacted from this tool to fetch information
-    * esi.evetech.net (for fetching ESI data)
-    * github.com (for update checking)
-* ESI keys are stored in your local home directory and secured by cryptography
-* ESI data is stored separately in a local database file in your home directory
-* All source code is on github under GPLv3
+![image](https://user-images.githubusercontent.com/20628481/190867502-6ba1476f-dcc5-42bb-a1a9-a6d73b4929d3.png)
+
+* if the notifications tab is selected you we see notifications in area <1>
+  * everytime changes to the database are performed a summary of the change will be displayed in the notification tab
+  * for example if the wallet changed on one of your registered characters / corporations you will see the change here
+  * this will also inform you about important events like fuel going low on a structure or a structure being attacked 
+
+## My Characters
+
+![image](https://user-images.githubusercontent.com/20628481/190867964-3c041cdc-595c-4cd3-a921-bf4b1e6cd45f.png)
+
+* after adding a character it will apear in the "My characters" tab
+* if you have a huge amount of characters you can filter the list to find one <8>
+* to get character details click on the blue highlighted character name <7> to open the character tab for it
+  * the character tabs contains sub tabs for detected character activities (for example Industry, Contrats, Journal)
+  * if a character does not have data for this activity (for example a character does not have any contracts) the tab will not be visible
+  
+ ### Industry
+ 
+ ![image](https://user-images.githubusercontent.com/20628481/190868246-c03d0d7a-ae36-41c1-a4ef-8c9f9a6c838f.png)
+
+  * The Industry tab <9> shows a list of all active industry jobs for this character
+  * the filter entries <13> are just text filters 
+    * additionally if you enter a number in the the status filter only jobs with a higher percentage of this value will be shown
+  * COPY CSV <10> will copy the currently filtered table into the clipboard
+  * Reset Filter <12> will clear all filters
+  * the number of totally displaeyed table entries is shown in <11>
+  
+### Contracts
+   
+![image](https://user-images.githubusercontent.com/20628481/190868666-acf135d4-d7cd-4547-b7c1-9469af6bbc5e.png)
+
+* Opening the contracts tab <14> will be similar to the industry tab 
+* if a contract contains multiple items, only the most valuable item will be displayed in the items field which additionally will be highlighted in blue
+* in this case clicking on the blue items field a table with all contract items will be shown in a separate pop up window
+
+### Journal
+   
+![image](https://user-images.githubusercontent.com/20628481/190868652-5cee5d1f-2487-4b3d-8a13-60dec1f959ea.png)
+   
+* The journal tab <15> is separated into the daily transactions section <16> and the detailed section <17>
+  * for each day all transactions from the same type are summed up for example the entry <16> shows the sum of all market_escrow transaction on that day 
+  * clicking on the row <16> will show the list of all summed up transactions for this day on the right side <17> 
+    * these are the same entries you see in-game
+* the time interval which is displayed can be selected with <18>
+* you can separate the transaction into income and expenses with <19>
+* the sum of all filtered transaction is shown in <20>
 
 
-## Line Member features
+## Corporations
 
-If you are a corporation line member you have access to the following tool
-features.
+* all characters who are directors of a corp will trigger this corp to be added to the corporation tab
+* to open a corporation tab blick on the blue highlighted corporation name <22>
+* to find the corporation in a huge list use the filter entries <23>
+* the wallet total of all filtered corporations is shown in <22>
 
-* Register any number of characters
-* Get notifications about finished industry jobs, marked orders and contracts
-* Sort and filter your wallet journal entries
+### ALTs
 
-## Corporation Director features
+![image](https://user-images.githubusercontent.com/20628481/190868959-c2200cfe-29e9-4688-ac1b-4f933f2c1465.png)
 
-If you are a corporation director you have access to the following additional
-tool features.
+* all corporation main characters a listed in <35>
+* by default all characters in your corporation are defined as mains. 
+  * however for the statistic it is important to group together all activities from a main and all his alt characters
+* to remove a character from the main list to re-assign him as an alt, click the x button behind the character name <36>
+  * now this character appears in the unassiged character list <38>
+  * note that this is an intermediate state, a character should either be a Main or an Alt. after unassigning him you have to perform the next step below.
 
-* Manage any number of alt corps
-* Assign alt characters in your corporation to their respective main characters
-  to get only main character names listed in all activity tables
-* List monthly activity of your line members for Bounties, Kills and Ship Losses
-* Get notifications about finished industry jobs, marked orders and contracts
-  for your corp
-* Get notifications for structure fuel expiry
-* Get an overview of all corporation structures and structure services
+ ![image](https://user-images.githubusercontent.com/20628481/190869060-8def9c46-25d5-456d-ae3f-65a06ed761e1.png)
 
-# FAQ
+* to assign an unassign ALT to a main character select the main in the main list <37>
+* then click the alt button for the ALT which you want to assign <38>
+* this character will be moved to the ALT list on the right side
 
-**I get an "Windows Protected your PC" warning when installing the windows release!**
+![image](https://user-images.githubusercontent.com/20628481/190869198-93fc74f7-c1c9-4f02-a1a6-70596ae63ef2.png)
 
-Signing windows executables is a costly thing. If you want to avoid this warning
-you have to manually build the omip tool on your system via the following steps:
+* when you select a main character <39> you will see all his ALTs in the character specific Alt list <40>
+* additionally you can see all assigned alts in the assigned Alt list <42>
+* pressing the x on either of this list will put the character back into the un assigned alt list from where he can be set as a main or assigned as an alt to a different main
 
-1. install  [GCC](https://sourceforge.net/projects/mingw-w64/)
-2. install  [GIT](https://git-scm.com/download/win)
-3. install [Go](https://golang.org/dl/)
-4. ensure gcc, git and go are listed in your PATH variable
-5. open a command line and type
-```bash
-go get github.com/Wilm0rien/omip 
-```
-this will download and build omip.exe into your %GOPATH%\bin folder
+![image](https://user-images.githubusercontent.com/20628481/190869299-94eabdc2-485a-45db-a9f3-682ee0fa14f8.png)
 
-**I can't find the Linux release!**
+* finally all Alts should be assigend
+  * the main list only contains mains <43>
+  * the unassigend alt list is empty <44>
+  * the alts of the currently selected main (in <43>) are shown in <45>
+  * the list of all alts is filled <46>
+  
+* in this state the corp statistic will only show the main activity
+* if an alt collects bounties or creates kill mails they will be assigned to its main
 
-For linux users you can just install [Go](https://golang.org/dl/) and run the 
-following command
-```bash
-go get github.com/Wilm0rien/omip 
-```
 
-**Where are my ESI tokens and Data stored exactly?**
 
-* $HOME/omip/ for linux
-* %APPDATA%/omip/ for windows
 
-**What do you mean with "tokes are secured by cryptography"?**
 
-You may assume that your local home directory is a save location to store your
-private data in general. However, you might want to put this data on an usb 
-stick and copy it on another machine because you bought a new computer and want 
-to continue filling your monthly statistics from there.
-
-When ever the token data is transferred out of this secure place for whatever 
-reason you are in danger that your keys get in the wrong hands.
-
-To protect at least the ESI keys to be only valid on one computer these keys are 
-encrypted via AES-256 symmetric encryption. The passphrase for this encryption 
-is an SHA-1 hash which is generated from your unique computer id and a salt. 
-This means that nobody (not even you) is able to use this key on a different 
-computer.
-
-In this way your ESI keys will only be valid on one computer, and you have to
-create new keys when moving your database to another machine. 
