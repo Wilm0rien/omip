@@ -129,6 +129,40 @@ OMIP - An Eve Online Data Aggregator
 * the second filter field in <25> accepts an amount of ISK in millions: 1 = 1 Million or 0.25 = 250000
   * only character who have at least earned this amount of isk will be displayed in this way
 
+### ISK Loss
+
+![image](https://user-images.githubusercontent.com/20628481/190902412-4e8c8841-22ff-461b-9869-db6a26c900ed.png)
+
+* the sum of all lost ships from kill mails is summed up for each main and his assigned alt characters
+* click on a number <27> to open the list of kill mails in s separate window
+* the sum of all losses is summed up on the bottom <28> 
+* you can filter for a character with the "filter char name" entry field <28>
+* you can filter all total losses which are higher than a number in millons via the "filter millions" entry field <28>
+* if a character loses a ship you will get a notification in the notifications tab <1> on update <3>
+
+### Structures
+
+![image](https://user-images.githubusercontent.com/20628481/190903099-a8494e69-83ba-49a1-83a6-b2b80f318920.png)
+
+* the structures tab <29> shows a list if all sturcture beloning to the corporation 
+* clicking on a structure <30> will show all active services and rigs of this structure on the right hand side <31>
+* if a structure changes its state by being attach you will get a message in the notifications screen <1> on upate <3>
+
+
+## ESI Keys
+
+![image](https://user-images.githubusercontent.com/20628481/190903249-17f7c078-3223-44e2-85c4-a50df4dbadaf.png)
+
+* the "ESI Keys" tab <32> shows the list of registered characters
+* unchecking a checkbox <33> for a character  will exclude this data from being refreshed on update <3>
+  * ths is useful if you have a lot of activity in some area but you do not want to track it with this tool.
+  * this may safe a lot of time and traffic on update <3>
+* you can delete the keys via delete button <34>
+  * this will not delete the data stored for this character in the database
+  * if you delete the last director of a corporation this corporation will not be visible anymore in the corporations tab
+ 
+
+
 
 
 
