@@ -96,17 +96,38 @@ OMIP - An Eve Online Data Aggregator
 * additionally you can see all assigned alts in the assigned Alt list <42>
 * pressing the x on either of this list will put the character back into the un assigned alt list from where he can be set as a main or assigned as an alt to a different main
 
-![image](https://user-images.githubusercontent.com/20628481/190869299-94eabdc2-485a-45db-a9f3-682ee0fa14f8.png)
+![image](https://user-images.githubusercontent.com/20628481/190897047-32333676-7634-477a-a8fd-16b6c2510e1a.png)
 
 * finally all Alts should be assigend
   * the main list only contains mains <43>
   * the unassigend alt list is empty <44>
   * the alts of the currently selected main (in <43>) are shown in <45>
   * the list of all alts is filled <46>
+
+* for large corporations all lists can be filtered <47>
+* after changing the assignement of your characters press "Safe to DB" <48> to safe the changes and refresh the corp statistic with the new alt mapping
+* press "Restore from DB" <48> to restore the mapping to the last safed state
   
 * in this state the corp statistic will only show the main activity
 * if an alt collects bounties or creates kill mails they will be assigned to its main
 
+### Kill Count
+
+![image](https://user-images.githubusercontent.com/20628481/190897224-aa88e803-aecf-4f55-8153-da6cf548b3b0.png)
+
+* the "Kill Count" tab <23> shows on how many corp kill mails a main character + his alts appeared
+* if two characters attack the same victim both of them get the kill count. 
+* if a character appears on a killmail from another corp, this kill is not counted because it does not appear in the character corporations kill list
+
+### Bounties
+
+![image](https://user-images.githubusercontent.com/20628481/190898569-fd6e1f87-bbee-44a3-9a6e-a174db409eb0.png)
+
+* all ISK which comes from bounties and ESS (Encounter Surveillance System) is summed up for each main and his assigned alt characters
+* The Bounties tab <24> shows how many isk has been collected for each main in this way per month
+* you can filter by character name  <25>
+* the second filter field in <25> accepts an amount of ISK in millions: 1 = 1 Million or 0.25 = 250000
+  * only character who have at least earned this amount of isk will be displayed in this way
 
 
 
