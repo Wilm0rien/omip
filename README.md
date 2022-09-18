@@ -85,7 +85,8 @@ OMIP - An Eve Online Data Aggregator
 
 * all corporation main characters a listed in <35>
 * by default all characters in your corporation are defined as mains. 
-  * however for the statistic it is important to group together all activities from a main and all his alt characters
+* however for the statistic it is important to group together all activities from a main and all his alt characters
+  * the alt mapping is optional, so you may skip this chapter
 * to remove a character from the main list to re-assign him as an alt, click the x button behind the character name <36>
   * now this character appears in the unassiged character list <38>
   * note that this is an intermediate state, a character should either be a Main or an Alt. after unassigning him you have to perform the next step below.
