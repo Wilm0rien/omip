@@ -65,6 +65,12 @@ OMIP - An Eve Online Data Aggregator
 * you can separate the transaction into income and expenses with <19>
 * the sum of all filtered transaction is shown in <20>
 
+### Transactions
+
+* transactions only appear in the notification window <1> if a new transaction has been found during update <3>
+* examples for transaction notifications are
+  * [OMIP] Wilm0rien sold 1 of units Procurer for 35.00M
+  * [OMIP] AresDragon bought 1 of units Heat Sink I for 0.06M
 
 ## Corporations
 
@@ -147,7 +153,9 @@ OMIP - An Eve Online Data Aggregator
 * the structures tab <29> shows a list if all sturcture beloning to the corporation 
 * clicking on a structure <30> will show all active services and rigs of this structure on the right hand side <31>
 * if a structure changes its state by being attach you will get a message in the notifications screen <1> on upate <3>
-
+* you will get a low fuel warning for every structure which is running out of fuel within the next 6 days
+  * this warning will be shown in the notification tab <1> on update <3>
+  * for example "[FYDYN] Barkrik - Red Dwarf fuel expires in   5d  2h"
 
 ## ESI Keys
 
