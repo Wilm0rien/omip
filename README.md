@@ -169,7 +169,7 @@ OMIP - An Eve Online Data Aggregator
 * you can delete the keys via delete button <34>
   * this will not delete the data stored for this character in the database
   * if you delete the last director of a corporation this corporation will not be visible anymore in the corporations tab
- 
+* when ever you close the tool <35> all your settings are saved 
 
 
 
