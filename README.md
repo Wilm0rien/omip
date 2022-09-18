@@ -50,8 +50,8 @@ OMIP - An Eve Online Data Aggregator
 ![image](https://user-images.githubusercontent.com/20628481/190868666-acf135d4-d7cd-4547-b7c1-9469af6bbc5e.png)
 
 * Opening the contracts tab <14> will be similar to the industry tab 
-* if a contract contains multiple items, only the most valuable item will be displayed in the items field which additionally will be highlighted in blue
-* in this case clicking on the blue items field a table with all contract items will be shown in a separate pop up window
+* The items field contains "multi" highlighted in blue if a contract contains multiple items
+  * in this case clicking on the blue items field a table with all contract items will be shown in a separate pop up window
 
 ### Journal
    
