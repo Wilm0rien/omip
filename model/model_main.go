@@ -262,11 +262,11 @@ func (obj *Model) CloseDB() {
 }
 
 func (obj *Model) getNumEntries(tableName string, whereClause string) int {
+	var num int
 	queryString := fmt.Sprintf(`SELECT  COUNT(*)  from %s WHERE %s;`, tableName, whereClause)
 	rows, err := obj.DB.Query(queryString)
 	util.CheckErr(err)
 	defer rows.Close()
-	var num int
 	num = 0
 	for rows.Next() {
 		rows.Scan(&num)

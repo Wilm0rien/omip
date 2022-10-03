@@ -166,6 +166,7 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	walletBtn := widget.NewButton("Wallet", func() {
 		obj.Ctrl.UpdateWallet(director, true)
 	})
+	/** TODO remove paps
 	papBtn := widget.NewButton("Paps", func() {
 		if aDash, ok := obj.Ctrl.ADash[director.CharInfoExt.CooperationId]; ok {
 			if aDash.Login() {
@@ -174,16 +175,21 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 				obj.AddLogEntry(fmt.Sprintf("Adash Login failed"))
 			}
 		}
+	})*/
+	crashbutton := widget.NewButton("test crash", func() {
+		
 	})
 	membersBtn := widget.NewButton("Member", func() {
 		obj.Ctrl.UpdateCorpMembers(director, true)
 	})
 	box := container.NewVBox(
 		contractBtn, contractItemsBtn, indudstryBtn, journalBtn, orderBtn, transactionsBtn,
-		killmailsBtn, structureBtn, walletBtn, membersBtn)
+		killmailsBtn, structureBtn, walletBtn, membersBtn, crashbutton)
+	/** TODO remove paps
 	if IsImperium(corp.AllianceId) {
 		box.Objects = append(box.Objects, papBtn)
 	}
+	*/
 	return box
 }
 
