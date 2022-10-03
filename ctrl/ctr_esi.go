@@ -656,7 +656,7 @@ func (obj *Ctrl) getLastKMsFromZkill(char *EsiChar, corp bool, year int, month i
 		var zkillKMList []zKillKM_t
 		contentError := json.Unmarshal(bodyBytes, &zkillKMList)
 		if contentError != nil {
-			obj.AddLogEntry(fmt.Sprintf("%s", string(bodyBytes)))
+			obj.AddLogEntry(fmt.Sprintf("%s", contentError.Error()))
 		} else {
 			result = make(map[int32]bool)
 			for _, km := range zkillKMList {
