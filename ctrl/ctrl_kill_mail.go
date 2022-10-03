@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
+	"time"
 )
 
 type KillMailsRecent_t struct {
@@ -84,6 +85,37 @@ func (obj *Ctrl) InitiateKMSkipList(char *EsiChar, corp bool) {
 			}
 		} else {
 			char.KmSkipList = kmSkipList
+		}
+	}
+	obj.UpdateSkippListLastMonth(char, corp)
+}
+
+func (obj *Ctrl) UpdateSkippListLastMonth(char *EsiChar, corp bool) {
+	thisYear := time.Now().Year()
+	thisMonth := time.Now().Month()
+	dontSkip := obj.getLastKMsFromZkill(char, corp, thisYear, int(thisMonth))
+	lastYear := thisYear
+	lastMonth := thisMonth - 1
+	if thisMonth == 1 {
+		lastYear--
+		lastMonth = 12
+	}
+	dontSkip2 := obj.getLastKMsFromZkill(char, corp, lastYear, int(lastMonth))
+	for key, val := range dontSkip2 {
+		dontSkip[key] = val
+	}
+	if corp {
+		corpObj := obj.GetCorp(char)
+		for key, _ := range dontSkip {
+			if _, ok := corpObj.KmSkipList[key]; ok {
+				delete(corpObj.KmSkipList, key)
+			}
+		}
+	} else {
+		for key, _ := range dontSkip {
+			if _, ok := char.KmSkipList[key]; ok {
+				delete(char.KmSkipList, key)
+			}
 		}
 	}
 }

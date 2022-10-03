@@ -160,6 +160,10 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	killmailsBtn := widget.NewButton("KillMails", func() {
 		obj.Ctrl.UpdateKillMails(director, true)
 	})
+	killmailsBtnLastMotn := widget.NewButton("KillMailsLastMonth", func() {
+		obj.Ctrl.UpdateSkippListLastMonth(director, true)
+		obj.Ctrl.UpdateKillMails(director, true)
+	})
 	structureBtn := widget.NewButton("Structure", func() {
 		obj.Ctrl.UpdateStructures(director, true)
 	})
@@ -177,14 +181,14 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 		}
 	})*/
 	crashbutton := widget.NewButton("test crash", func() {
-		
+
 	})
 	membersBtn := widget.NewButton("Member", func() {
 		obj.Ctrl.UpdateCorpMembers(director, true)
 	})
 	box := container.NewVBox(
 		contractBtn, contractItemsBtn, indudstryBtn, journalBtn, orderBtn, transactionsBtn,
-		killmailsBtn, structureBtn, walletBtn, membersBtn, crashbutton)
+		killmailsBtn, killmailsBtnLastMotn, structureBtn, walletBtn, membersBtn, crashbutton)
 	/** TODO remove paps
 	if IsImperium(corp.AllianceId) {
 		box.Objects = append(box.Objects, papBtn)

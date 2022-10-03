@@ -437,7 +437,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			now := time.Now().Unix()
 			if expireTime > now-24*60*60 &&
 				expireTime < now+24*60*60 { // check value is plausible = at least older than 24h before now
-				if expireTime > now {       // check if cacheing is active
+				if expireTime > now { // check if cacheing is active
 					if bodyBytes != nil {
 						timeDiff := expireTime - now
 						obj.Model.LogObj.Printf("REQ: %s\n", req.URL)
@@ -603,7 +603,7 @@ func (obj *Ctrl) ZkillOk(kmId int) (retval bool) {
 	if err1 != nil {
 		return false
 	}
-	req.Header.Add("User-Agent", "Contact: Wilm0rien in game or on devfleet slack")
+	req.Header.Add("User-Agent", "https://github.com/Wilm0rien/omip Maintainer: Wilm0rien in game or on devfleet slack")
 	bodyBytes, clientErr, _ := obj.httpClientRequest(req)
 	if clientErr == nil && bodyBytes != nil {
 		responseStr := string(bodyBytes)
@@ -619,4 +619,50 @@ func (obj *Ctrl) ZkillOk(kmId int) (retval bool) {
 		}
 	}
 	return retval
+}
+
+type zKillKM_t struct {
+	KillMailID int32      `json:"killmail_id"`
+	Zkb        zKillZKB_t `json:"zkb"`
+}
+type zKillZKB_t struct {
+	LocationID     int32   `json:"locationID"`
+	Hash           string  `json:"hash"`
+	FittedValue    float32 `json:"fittedValue"`
+	DroppedValue   float32 `json:"droppedValue"`
+	DestroyedValue float32 `json:"destroyedValue"`
+	TotalValue     float32 `json:"totalValue"`
+	Points         int32   `json:"points"`
+	Npc            bool    `json:"npc"`
+	Solo           bool    `json:"solo"`
+	Awox           bool    `json:"awox"`
+}
+
+func (obj *Ctrl) getLastKMsFromZkill(char *EsiChar, corp bool, year int, month int) (result map[int32]bool) {
+	var url string
+	if corp {
+		url = fmt.Sprintf("https://zkillboard.com/api/corporationID/%d/year/%d/month/%d/", char.CharInfoExt.CooperationId, year, month)
+	} else {
+		url = fmt.Sprintf("https://zkillboard.com/api/characterID/%d/year/%d/month/%d/", char.CharInfoData.CharacterID, year, month)
+	}
+	req, err1 := http.NewRequest("GET", url, nil)
+
+	if err1 != nil {
+		return nil
+	}
+	req.Header.Add("User-Agent", "https://github.com/Wilm0rien/omip Maintainer: Wilm0rien in game or on devfleet slack")
+	bodyBytes, clientErr, _ := obj.httpClientRequest(req)
+	if clientErr == nil && bodyBytes != nil {
+		var zkillKMList []zKillKM_t
+		contentError := json.Unmarshal(bodyBytes, &zkillKMList)
+		if contentError != nil {
+			obj.AddLogEntry(fmt.Sprintf("%s", string(bodyBytes)))
+		} else {
+			result = make(map[int32]bool)
+			for _, km := range zkillKMList {
+				result[km.KillMailID] = true
+			}
+		}
+	}
+	return result
 }
