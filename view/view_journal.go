@@ -411,7 +411,7 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 		},
 		func() fyne.CanvasObject {
 			newDescriptionLabel := widget.NewLabel("Description")
-			newDescriptionLabel.Wrapping = fyne.TextWrapWord
+			//newDescriptionLabel.Wrapping = fyne.TextWrapWord
 			labelDate := widget.NewLabel("Date")
 			labelAmount := widget.NewLabel("Amount")
 
@@ -497,10 +497,10 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 			updateLists()
 		})
 	sumLabel := widget.NewLabel("Sum:")
-	//mainGrid := container.New(layout.NewGridLayout(2), aggregateListWidget, typeListWidget)
+
 	mainGrid := container.NewHSplit(aggregateListWidget, typeListWidget)
 	mainGrid.Offset = 0.3
-	//mainGrid := container.NewBorder(nil, nil, aggregateListWidget, nil, typeListWidget)
+
 	topGrid := container.New(layout.NewGridLayout(2),
 		widget.NewLabel("Combined transaction types per day"),
 		selectedLabel)
