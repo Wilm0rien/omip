@@ -19,9 +19,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"os/exec"
-	"path"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -96,7 +93,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 			}),
 
 			fyne.NewMenuItem("Check for Update", func() {
-				asset, TagName := update.GetRelease(updateUrl, `omip_updater\.zip$`)
+				asset, TagName := update.GetRelease(updateUrl, `omip\.zip$`)
 
 				d := dialog.NewCustom("Update Status", "OK", obj.makeupdateDialog(TagName, version, asset), obj.WindowPtr)
 				d.Show()
@@ -182,51 +179,63 @@ func (obj *OmipGui) makeBottomStatus() (result fyne.CanvasObject) {
 	obj.Ctrl.GuiStatusCB = updateStatusCB
 	return newBottomGrid
 }
-
 func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, asset *update.GitAssets) (result fyne.CanvasObject) {
 	var msg string
-	updaterExe := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.exe")
-	updaterZip := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.zip")
-	newOmipZip := path.Join(obj.Ctrl.Model.LocalDir, "omip.zip")
-	if util.Exists(updaterExe) {
-		obj.RemoveOldUpdater(updaterExe, newVersion)
-	}
-	if !util.Exists(updaterExe) {
-		obj.DownLoadUpdater(updaterExe, updaterZip, asset)
-	}
-
-	if !util.Exists(updaterExe) {
-		msg = fmt.Sprintf("ERROR updater executable not found at %s", updaterExe)
+	if newVersion == currentVersion {
+		msg = fmt.Sprintf("software is up to date %s current %s", newVersion, currentVersion)
 	} else {
-		ex, _ := os.Executable()
-		if newVersion == currentVersion {
-			msg = fmt.Sprintf("software is up to date %s current %s", newVersion, currentVersion)
-		} else {
-			switch runtime.GOOS {
-			case "linux":
-				msg = fmt.Sprintf("TODO LINUX Update not implemented")
-			case "windows":
-				if dlErr := obj.DownloadUpdate(newOmipZip); dlErr != nil {
-					msg = fmt.Sprintf("failed to download omip.zip %s", dlErr.Error())
-				} else {
-					arguments := fmt.Sprintf(`/k %s --target=%s --source=%s`, updaterExe, ex, newOmipZip)
-					cmd := exec.Command("cmd", arguments)
-					execErr2 := cmd.Start()
-					if execErr2 != nil {
-						msg = fmt.Sprintf("error starting process %s", updaterExe)
-						obj.Ctrl.Model.LogObj.Printf(msg)
-					} else {
-						obj.WindowPtr.Close()
-					}
-				}
-			}
-		}
+		msg = fmt.Sprintf("downloaded %s", asset.Url)
+		util.OpenUrl(asset.Url)
 	}
-
 	msgLabel := widget.NewLabel(msg)
 	return container.NewVBox(msgLabel)
 }
 
+/*
+	func (obj *OmipGui) makeupdateDialog(newVersion string, currentVersion string, asset *update.GitAssets) (result fyne.CanvasObject) {
+		var msg string
+		updaterExe := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.exe")
+		updaterZip := path.Join(obj.Ctrl.Model.LocalDir, "omip_updater.zip")
+		newOmipZip := path.Join(obj.Ctrl.Model.LocalDir, "omip.zip")
+		if util.Exists(updaterExe) {
+			obj.RemoveOldUpdater(updaterExe, newVersion)
+		}
+		if !util.Exists(updaterExe) {
+			obj.DownLoadUpdater(updaterExe, updaterZip, asset)
+		}
+
+		if !util.Exists(updaterExe) {
+			msg = fmt.Sprintf("ERROR updater executable not found at %s", updaterExe)
+		} else {
+			ex, _ := os.Executable()
+			if newVersion == currentVersion {
+				msg = fmt.Sprintf("software is up to date %s current %s", newVersion, currentVersion)
+			} else {
+				switch runtime.GOOS {
+				case "linux":
+					msg = fmt.Sprintf("TODO LINUX Update not implemented")
+				case "windows":
+					if dlErr := obj.DownloadUpdate(newOmipZip); dlErr != nil {
+						msg = fmt.Sprintf("failed to download omip.zip %s", dlErr.Error())
+					} else {
+						arguments := fmt.Sprintf(`/k %s --target=%s --source=%s`, updaterExe, ex, newOmipZip)
+						cmd := exec.Command("cmd", arguments)
+						execErr2 := cmd.Start()
+						if execErr2 != nil {
+							msg = fmt.Sprintf("error starting process %s", updaterExe)
+							obj.Ctrl.Model.LogObj.Printf(msg)
+						} else {
+							obj.WindowPtr.Close()
+						}
+					}
+				}
+			}
+		}
+
+		msgLabel := widget.NewLabel(msg)
+		return container.NewVBox(msgLabel)
+	}
+*/
 func (obj *OmipGui) makeLicenseDialog() (result fyne.CanvasObject) {
 	omip := widget.NewLabel(
 		`Copyright (C) 2021 Christian Wilmes
@@ -333,6 +342,7 @@ func (obj *OmipGui) UpdateAllData() {
 	prog.Show()
 }
 
+/*
 func (obj *OmipGui) RemoveOldUpdater(updaterExe string, newVersion string) {
 	switch runtime.GOOS {
 	case "linux":
@@ -383,7 +393,7 @@ func (obj *OmipGui) DownloadUpdate(newOmipZip string) (err error) {
 	updateObj := update.NewUpdaterObj()
 	asset, _ := update.GetRelease(updateUrl, `omip\.zip$`)
 	return updateObj.DownloadFile(newOmipZip, asset.Url, asset.FileSize)
-}
+}*/
 
 func (obj *OmipGui) UpdateChar(char *ctrl.EsiChar) {
 	obj.Up.UpdateMutex.Lock()

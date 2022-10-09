@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	OmipSoftwareVersion = "1.0.0"
+	OmipSoftwareVersion = "1.0.1"
 )
 
 func Assert(value bool) {
