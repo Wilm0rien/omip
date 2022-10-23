@@ -11,7 +11,7 @@ go build -ldflags "-H=windowsgui -s -w"
 IF '%ERRORLEVEL%'=='0' GOTO OK
 GOTO:EOF
 :OK
-fyne package -appBuild 15 -os windows -icon logo.png -appID omip.exe -appVersion 1.0.1  -executable omip.exe -name "omip v1.0.1" -release -tags 1.0.1
+fyne package -appBuild 102 -os windows -icon logo.png -appID omip.exe -appVersion 1.0.2  -executable omip.exe -name "omip v1.0.2" -release -tags 1.0.2
 
 "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /n "Open Source Developer, Christian Wilmes" /t http://time.certum.pl/ /fd sha256 "E:\upload\go_test_folder\go_scripts\omip\omip.exe"
 "C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /n "Open Source Developer, Christian Wilmes" /t http://time.certum.pl/ /fd sha256 "E:\upload\go_test_folder\go_scripts\omip\omip_cmd.exe"

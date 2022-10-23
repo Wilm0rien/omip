@@ -17,12 +17,16 @@ var debugEnableFlag = flag.Bool("debug", false, "enable debug tab")
 
 var guiEnableFlag = flag.Bool("gui", false, "enable gui (cmd mode)")
 var cmdEnableFlag = flag.Bool("cmd", false, "enable cmd")
+var dontWaitFlag = flag.Bool("no_pause", false, "do not wait for enterkey in console mode")
 var CmdLineOpt string
 
 func main() {
 	flag.Parse()
 	if *guiEnableFlag {
 		CmdLineOpt = "default_gui"
+	}
+	if *cmdEnableFlag {
+		CmdLineOpt = "default_cmd"
 	}
 	// kill existing instance
 	urlStrShutdown := fmt.Sprintf("http://localhost:4716/callback?code=shutdown&state=0")
@@ -37,7 +41,16 @@ func main() {
 		ctrlObj.AddLogCB = func(entry string) {
 			fmt.Printf("%s\n", entry)
 		}
-		ctrlObj.UpdateAllDataCmd(nil, nil)
+		if ok, err := ctrlObj.CheckUpdatePreCon(); ok {
+			ctrlObj.UpdateAllDataCmd(nil, nil)
+		} else {
+			log.Printf("%s", err.Error())
+		}
+		if !*dontWaitFlag {
+			fmt.Println("Press the Enter Key to terminate the console screen!")
+			fmt.Scanln() // wait for Enter Key
+		}
+
 	} else {
 		appObj := app.New()
 		gui := view.NewOmipGui(ctrlObj, appObj, *debugEnableFlag, util.OmipSoftwareVersion)
