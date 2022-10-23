@@ -1,6 +1,20 @@
 # OMIP
 
-OMIP - An Eve Online Data Aggregator
+OMIP - An Eve Online Activity Tracker
+
+
+## Overview
+
+* omip shows corp main member activity over time: kills, losses, bounties
+ * shows loss details and zkill link when clicking on character cell in monthly table
+* omip shows structure fuel and structure modules
+ * shows fuel warning during update
+ * shows attack warning if attacked
+ * shows structure state chanegs during update
+* on update you get an overview on what has changed on which account.
+* shows journal entries aggregated into per-day-activity and detailed list in split view
+* shows character and corp industry jobs and contracts
+
 
 
 ## Getting Started
