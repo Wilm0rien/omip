@@ -2,7 +2,6 @@ package view
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -19,7 +18,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -33,7 +31,6 @@ type WindowList struct {
 	Title string
 	wRef  fyne.Window
 }
-type UpdateFunc func(char *ctrl.EsiChar, corp bool)
 
 type OmipGui struct {
 	Ctrl        *ctrl.Ctrl
@@ -47,13 +44,6 @@ type OmipGui struct {
 	NotifyText  string
 	DebugFlag   bool
 	Version     string
-	Up          EsiUpdate
-}
-
-type EsiUpdate struct {
-	UpdateFuncList []UpdateFunc
-	UpdateMutex    sync.Mutex
-	JobList        []string
 }
 
 func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *OmipGui {
@@ -64,7 +54,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 	obj.Ctrl.AuthCb = obj.AddEsiKey
 	obj.Ctrl.AddLogCB = obj.AddLogEntry
 	obj.AppPtr = app
-	obj.populateUpdateFuncList()
+
 	obj.AppPtr.SetIcon(resourceLogoPng)
 	menu := fyne.NewMainMenu(
 		fyne.NewMenu("File",
@@ -255,90 +245,23 @@ For third party licenses see link below:
 	return container.NewVBox(omip, thirdPartyUrl)
 }
 
-func (obj *OmipGui) populateUpdateFuncList() {
-	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
-	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateContracts)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateContractItems)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateIndustry)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateKillMails)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateWallet)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateCorpMembers)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateStructures)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateNotifications)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateTransaction)
-	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.Ctrl.UpdateOrders)
-}
-
 func (obj *OmipGui) UpdateAllData() {
-	if len(obj.Ctrl.Esi.EsiCharList) == 0 {
-		err := errors.New("no characters registered to update data")
+	if ok, err := obj.Ctrl.CheckUpdatePreCon(); !ok {
 		dialog.ShowError(err, obj.WindowPtr)
 		return
 	}
-	if obj.Ctrl.Model.DebounceEntryExists("update_string") {
-		err := errors.New("please wait 5 minutes between updates")
-		dialog.ShowError(err, obj.WindowPtr)
-		return
-	}
-
-	serverStatus := obj.Ctrl.CheckServerUp(obj.Ctrl.Esi.EsiCharList[0])
-	if !serverStatus {
-		err := errors.New("esi server is starting up or is not reachable. cannot update data")
-		dialog.ShowError(err, obj.WindowPtr)
-		return
-	}
-
 	obj.TabPtr.SelectIndex(0)
-	obj.Ctrl.Model.AddDebounceEntry("update_string")
+
 	prog := obj.Progress
-	go func() {
-		obj.Up.UpdateMutex.Lock()
-		defer obj.Up.UpdateMutex.Unlock()
-		totalItems := (len(obj.Ctrl.Esi.EsiCharList) + len(obj.Ctrl.Esi.EsiCorpList) + 1) * len(obj.Up.UpdateFuncList)
-		// add 1 journal request per character and 7 journal requests per corp
-		totalItems += len(obj.Ctrl.Esi.EsiCharList) + (len(obj.Ctrl.Esi.EsiCorpList) * 7)
-		var itemCount int
-		if len(obj.Ctrl.Esi.EsiCharList) > 0 {
-			obj.Ctrl.UpdateMarket(obj.Ctrl.Esi.EsiCharList[0], false)
-		}
-		for _, char := range obj.Ctrl.Esi.EsiCharList {
-			itemCount++
-			// NOTE: the journal has to be updated first to update the journal_links table
-			// this is because only contracts with journal links are identified as relevant for being stored
-			obj.Ctrl.UpdateJournal(char, false, 0)
-
-			for idx, updateFunc := range obj.Up.UpdateFuncList {
-				obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
-				updateFunc(char, false)
-				itemCount++
-				prog.SetValue(float64(itemCount) / float64(totalItems))
-			}
-
-			prog.SetValue(float64(itemCount) / float64(totalItems))
-		}
-		for _, corp := range obj.Ctrl.Esi.EsiCorpList {
-			director := obj.Ctrl.GetCorpDirector(corp.CooperationId)
-			if director != nil {
-				for idx, updateFunc := range obj.Up.UpdateFuncList {
-					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
-					updateFunc(director, true)
-					itemCount++
-					prog.SetValue(float64(itemCount) / float64(totalItems))
-				}
-				for i := 1; i <= 7; i++ {
-					obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
-					obj.Ctrl.UpdateJournal(director, true, i)
-					itemCount++
-					prog.SetValue(float64(itemCount) / float64(totalItems))
-				}
-			}
-		}
-
+	finishCb := func() {
 		prog.SetValue(1)
 		obj.UpdateGui()
 		prog.Hide()
-	}()
+	}
+	updateProg := func(c float64) {
+		prog.SetValue(c)
+	}
+	go obj.Ctrl.UpdateAllDataCmd(updateProg, finishCb)
 	prog.Show()
 }
 
@@ -394,29 +317,6 @@ func (obj *OmipGui) DownloadUpdate(newOmipZip string) (err error) {
 	asset, _ := update.GetRelease(updateUrl, `omip\.zip$`)
 	return updateObj.DownloadFile(newOmipZip, asset.Url, asset.FileSize)
 }*/
-
-func (obj *OmipGui) UpdateChar(char *ctrl.EsiChar) {
-	obj.Up.UpdateMutex.Lock()
-	defer obj.Up.UpdateMutex.Unlock()
-	obj.Ctrl.UpdateJournal(char, false, 0)
-	for idx, updateFunc := range obj.Up.UpdateFuncList {
-		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
-		updateFunc(char, false)
-	}
-}
-func (obj *OmipGui) UpdateCorp(director *ctrl.EsiChar) {
-	obj.Up.UpdateMutex.Lock()
-	corp := obj.Ctrl.GetCorp(director)
-	defer obj.Up.UpdateMutex.Unlock()
-	for idx, updateFunc := range obj.Up.UpdateFuncList {
-		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
-		updateFunc(director, true)
-	}
-	for i := 1; i <= 7; i++ {
-		obj.Ctrl.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
-		obj.Ctrl.UpdateJournal(director, true, i)
-	}
-}
 
 func (obj *OmipGui) UpdateGui() {
 	obj.CorpUpdate()
@@ -524,13 +424,13 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 func (obj *OmipGui) AddEsiKey(char *ctrl.EsiChar) {
 	obj.TabPtr.SelectIndex(0)
 	obj.AddLogEntry("Update Initiated! Please Wait!")
-	obj.UpdateChar(char)
+	obj.Ctrl.UpdateChar(char)
 
 	if char.CharInfoExt.Director {
 		corp := obj.Ctrl.GetCorp(char)
 		if corp != nil {
 			obj.AddLogEntry(fmt.Sprintf("added %s director of %s", char.CharInfoData.CharacterName, corp.Name))
-			obj.UpdateCorp(char)
+			obj.Ctrl.UpdateCorp(char)
 		} else {
 			obj.AddLogEntry(fmt.Sprintf("added %s", char.CharInfoData.CharacterName))
 		}

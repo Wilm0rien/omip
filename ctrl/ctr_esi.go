@@ -431,13 +431,15 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			bodyBytes = obj.Model.LoadEtag(oldEtag)
 			if bodyBytes != nil {
 				req.Header.Add("If-None-Match", oldEtag)
+			} else {
+				delete(obj.Esi.ETags, url)
 			}
 		}
 		if expireTime, ok := obj.Esi.CacheEntries[url]; ok {
 			now := time.Now().Unix()
 			if expireTime > now-24*60*60 &&
 				expireTime < now+24*60*60 { // check value is plausible = at least older than 24h before now
-				if expireTime > now { // check if cacheing is active
+				if expireTime > now {       // check if cacheing is active
 					if bodyBytes != nil {
 						timeDiff := expireTime - now
 						obj.Model.LogObj.Printf("REQ: %s\n", req.URL)
@@ -477,6 +479,9 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					obj.Model.LogObj.Printf("RESP (ETAG): %d bytes\n", len(bodyBytes))
 					requestOK = true
 					etagTrigger = true
+
+				} else {
+					delete(obj.Esi.ETags, url)
 				}
 			} else {
 				if clientErr == nil {

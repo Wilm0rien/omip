@@ -2,10 +2,12 @@ package ctrl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -28,7 +30,7 @@ type urlCache struct {
 type NVConfigData struct {
 	PeriodFilter string
 }
-
+type UpdateFunc func(char *EsiChar, corp bool)
 type Ctrl struct {
 	Model       *model.Model
 	Esi         EsiData
@@ -39,6 +41,13 @@ type Ctrl struct {
 	LogEntries  []string
 	AddLogCB    func(entry string)
 	GuiStatusCB func(entry string, fieldId int)
+	Up          EsiUpdate
+}
+
+type EsiUpdate struct {
+	UpdateFuncList []UpdateFunc
+	UpdateMutex    sync.Mutex
+	JobList        []string
 }
 
 func NewCtrl(model *model.Model) *Ctrl {
@@ -48,7 +57,7 @@ func NewCtrl(model *model.Model) *Ctrl {
 	obj.Svr.cancelChan = make(chan struct{})
 	obj.urlCache = make(map[string]urlCache)
 	obj.ADash = make(map[int]*ADashClient)
-
+	obj.populateUpdateFuncList()
 	close(obj.Svr.cancelChan)
 	return &obj
 }
@@ -67,6 +76,44 @@ const (
 	ESI_FILE_WRITE_ERROR
 	ESI_FILE_JSON_ERROR
 )
+
+func (obj *Ctrl) populateUpdateFuncList() {
+	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
+	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContracts)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContractItems)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateIndustry)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateKillMails)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateWallet)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateCorpMembers)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateStructures)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateNotifications)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateTransaction)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateOrders)
+}
+
+func (obj *Ctrl) UpdateChar(char *EsiChar) {
+	obj.Up.UpdateMutex.Lock()
+	defer obj.Up.UpdateMutex.Unlock()
+	obj.UpdateJournal(char, false, 0)
+	for idx, updateFunc := range obj.Up.UpdateFuncList {
+		obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
+		updateFunc(char, false)
+	}
+}
+func (obj *Ctrl) UpdateCorp(director *EsiChar) {
+	obj.Up.UpdateMutex.Lock()
+	corp := obj.GetCorp(director)
+	defer obj.Up.UpdateMutex.Unlock()
+	for idx, updateFunc := range obj.Up.UpdateFuncList {
+		obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
+		updateFunc(director, true)
+	}
+	for i := 1; i <= 7; i++ {
+		obj.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
+		obj.UpdateJournal(director, true, i)
+	}
+}
 
 func (obj EsiFileError) Error() (result string) {
 	switch obj.ErrorCode {
@@ -187,5 +234,79 @@ func (obj *Ctrl) UpdateGuiStatus1(entry string) {
 func (obj *Ctrl) UpdateGuiStatus2(entry string) {
 	if obj.GuiStatusCB != nil {
 		obj.GuiStatusCB(entry, 2)
+	}
+}
+
+func (obj *Ctrl) CheckUpdatePreCon() (ok bool, err error) {
+	if len(obj.Esi.EsiCharList) == 0 {
+		err = errors.New("no characters registered to update data")
+		return
+	}
+	if obj.Model.DebounceEntryExists("update_string") {
+		err = errors.New("please wait 5 minutes between updates")
+		return
+	}
+
+	serverStatus := obj.CheckServerUp(obj.Esi.EsiCharList[0])
+	if !serverStatus {
+		err = errors.New("esi server is starting up or is not reachable. cannot update data")
+		return
+	}
+	obj.Model.AddDebounceEntry("update_string")
+	return true, nil
+}
+
+func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
+	obj.Up.UpdateMutex.Lock()
+	defer obj.Up.UpdateMutex.Unlock()
+	totalItems := (len(obj.Esi.EsiCharList) + len(obj.Esi.EsiCorpList) + 1) * len(obj.Up.UpdateFuncList)
+	// add 1 journal request per character and 7 journal requests per corp
+	totalItems += len(obj.Esi.EsiCharList) + (len(obj.Esi.EsiCorpList) * 7)
+	var itemCount int
+	if len(obj.Esi.EsiCharList) > 0 {
+		obj.UpdateMarket(obj.Esi.EsiCharList[0], false)
+	}
+	for _, char := range obj.Esi.EsiCharList {
+		itemCount++
+		// NOTE: the journal has to be updated first to update the journal_links table
+		// this is because only contracts with journal links are identified as relevant for being stored
+		obj.UpdateJournal(char, false, 0)
+
+		for idx, updateFunc := range obj.Up.UpdateFuncList {
+			obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", char.CharInfoData.CharacterName, obj.Up.JobList[idx]))
+			updateFunc(char, false)
+			itemCount++
+			if updateProg != nil {
+				updateProg(float64(itemCount) / float64(totalItems))
+			}
+		}
+
+		if updateProg != nil {
+			updateProg(float64(itemCount) / float64(totalItems))
+		}
+	}
+	for _, corp := range obj.Esi.EsiCorpList {
+		director := obj.GetCorpDirector(corp.CooperationId)
+		if director != nil {
+			for idx, updateFunc := range obj.Up.UpdateFuncList {
+				obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
+				updateFunc(director, true)
+				itemCount++
+				if updateProg != nil {
+					updateProg(float64(itemCount) / float64(totalItems))
+				}
+			}
+			for i := 1; i <= 7; i++ {
+				obj.UpdateGuiStatus1(fmt.Sprintf("%s wallet division (%d)", corp.Name, i))
+				obj.UpdateJournal(director, true, i)
+				itemCount++
+				if updateProg != nil {
+					updateProg(float64(itemCount) / float64(totalItems))
+				}
+			}
+		}
+	}
+	if finishCb != nil {
+		finishCb()
 	}
 }
