@@ -37,6 +37,8 @@ OMIP - An Eve Online Activity Tracker
   * everytime changes to the database are performed a summary of the change will be displayed in the notification tab
   * for example if the wallet changed on one of your registered characters / corporations you will see the change here
   * this will also inform you about important events like fuel going low on a structure or a structure being attacked 
+  * to display the latest notification automatically on startup add omip_cmd to your autostart
+  * * on windows10 press windows+R key and type shell:startup then drag and drop omip_cmd.exe into the window
 
 ## My Characters
 
