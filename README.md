@@ -1,6 +1,6 @@
 # OMIP
 
-OMIP - An Eve Online Activity Tracker
+OMIP - An Eve Online Data Aggregator
 
 
 ## Overview
