@@ -301,7 +301,7 @@ func (obj *Model) LoadEtag(Etag string) (bodybytes []byte) {
 	if err == nil {
 		bodybytes = content
 	} else {
-		log.Printf("error reading etag %s", err.Error())
+		//log.Printf("error reading etag %s", err.Error())
 	}
 	return
 }

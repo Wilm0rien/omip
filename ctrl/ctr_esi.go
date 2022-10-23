@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -439,7 +440,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			now := time.Now().Unix()
 			if expireTime > now-24*60*60 &&
 				expireTime < now+24*60*60 { // check value is plausible = at least older than 24h before now
-				if expireTime > now {       // check if cacheing is active
+				if expireTime > now { // check if cacheing is active
 					if bodyBytes != nil {
 						timeDiff := expireTime - now
 						obj.Model.LogObj.Printf("REQ: %s\n", req.URL)
@@ -479,7 +480,6 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					obj.Model.LogObj.Printf("RESP (ETAG): %d bytes\n", len(bodyBytes))
 					requestOK = true
 					etagTrigger = true
-
 				} else {
 					delete(obj.Esi.ETags, url)
 				}
@@ -514,9 +514,13 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 								re := regexp.MustCompile(`^"(.*)"$`)
 								result := re.FindStringSubmatch(newEtag[0])
 								if len(result) > 1 {
-									obj.Esi.ETags[url] = result[1]
 									// store the new etag and delete the old etag
-									obj.Model.StoreEtag(result[1], oldEtag, bodyBytes2)
+									if obj.Model.StoreEtag(result[1], oldEtag, bodyBytes2) {
+										NewFileName := path.Join(obj.Model.LocalEtagCache, result[1])
+										if !util.Exists(NewFileName) {
+											obj.Esi.ETags[url] = result[1]
+										}
+									}
 								}
 							}
 						}
