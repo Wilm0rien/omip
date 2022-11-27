@@ -39,6 +39,7 @@ const (
 	CTRT4IssuedTS
 	CTRT5CCompTS
 	CTRT6Info
+	CTRT7Location
 )
 
 func NewCTRTable(gui *OmipGui, fullList []*model.DBContract, char *ctrl.EsiChar, isCorp bool) *ctrGuiTable {
@@ -58,6 +59,7 @@ func NewCTRTable(gui *OmipGui, fullList []*model.DBContract, char *ctrl.EsiChar,
 	obj.header = append(obj.header, "DateIssued")
 	obj.header = append(obj.header, "DateCompleted")
 	obj.header = append(obj.header, "Info")
+	obj.header = append(obj.header, "Location")
 	obj.colWidth = make([]float32, 0, 10)
 	obj.colWidth = append(obj.colWidth, 100)
 	obj.colWidth = append(obj.colWidth, 100)
@@ -66,6 +68,7 @@ func NewCTRTable(gui *OmipGui, fullList []*model.DBContract, char *ctrl.EsiChar,
 	obj.colWidth = append(obj.colWidth, 200)
 	obj.colWidth = append(obj.colWidth, 200)
 	obj.colWidth = append(obj.colWidth, 300)
+	obj.colWidth = append(obj.colWidth, 400)
 	obj.filter = make([]string, 0, 10)
 	for i := 0; i < len(obj.header); i++ {
 		obj.filter = append(obj.filter, "")
@@ -155,6 +158,8 @@ func (obj *ctrGuiTable) getCellStrFromList(rowIdx int, colIdx int, inputList []*
 				}
 			case CTRT6Info:
 				retval, _ = obj.Ctrl.Model.GetStringEntry(listElem.Title)
+			case CTRT7Location:
+				retval = obj.Ctrl.GetStructureNameCached(listElem.End_location_id, obj.char)
 			}
 		}
 	}
@@ -375,7 +380,25 @@ func (obj *ctrGuiTable) SortCol(colIdx int) {
 			aStr, _ := obj.Ctrl.Model.GetStringEntry(a.Title)
 			bStr, _ := obj.Ctrl.Model.GetStringEntry(b.Title)
 			retval = aStr >= bStr
+		case CTRT7Location:
+			aStr := obj.Ctrl.GetStructureNameCached(a.End_location_id, obj.char)
+			bStr := obj.Ctrl.GetStructureNameCached(b.End_location_id, obj.char)
+			if aStr == bStr {
+				aStr := "no items"
+				bStr := "no items"
+				if val, ok := obj.ctrID2ItemMap[a.Contract_id]; ok {
+					aStr = val.ItemString
+				}
+				if val2, ok2 := obj.ctrID2ItemMap[b.Contract_id]; ok2 {
+					bStr = val2.ItemString
+				}
+				retval = aStr >= bStr
+			} else {
+				retval = aStr >= bStr
+			}
+
 		}
+
 		if obj.sortCount%2 == 0 {
 			retval = !retval
 		}

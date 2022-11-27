@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
+	"net/http"
 	"time"
 )
 
@@ -89,6 +90,57 @@ func (obj *Ctrl) GetStructureNameFromEsi(char *EsiChar, structureId int64) (retv
 	}
 
 	return retval
+}
+
+func (obj *Ctrl) getSystemName(structureID int64, char *EsiChar) (name string) {
+	url := fmt.Sprintf("https://esi.evetech.net/v3/universe/names/")
+	bodyBytes2, resp := obj.getSecuredUrlPost(url, fmt.Sprintf("[%d]", structureID), char)
+	if resp.StatusCode == http.StatusOK {
+		var uniNames []universeNames
+		err := json.Unmarshal(bodyBytes2, &uniNames)
+		if err != nil {
+			obj.AddLogEntry(fmt.Sprintf(err.Error()))
+		} else {
+			for _, uniName := range uniNames {
+				var structName2 structName
+				structName2.Name = uniName.Name
+				dbStruct := obj.convertEsiStructureName2DB(&structName2, structureID)
+				obj.Model.AddStructureNameEntry(dbStruct)
+				name = structName2.Name
+			}
+		}
+	}
+	return
+}
+
+func (obj *Ctrl) GetStructureNameCached(structureID int64, char *EsiChar) (name string) {
+	if val, ok := obj.structCache[structureID]; ok {
+		name = val
+	} else {
+		structNameItem := obj.Model.GetStructureName(structureID)
+		if structNameItem == nil {
+			if structureID < 100000000 {
+				uniName := obj.getSystemName(structureID, char)
+				if uniName == "" {
+					obj.AddLogEntry(fmt.Sprintf("ERROR processStructInfo invalid station id %d", structureID))
+				} else {
+					name = uniName
+				}
+
+			} else {
+				name = obj.GetStructureNameFromEsi(char, structureID)
+			}
+		} else {
+			if name2, ok2 := obj.Model.GetStringEntry(structNameItem.NameRef); ok2 {
+				name = name2
+			}
+		}
+		if name != "" {
+			obj.structCache[structureID] = name
+		}
+	}
+
+	return
 }
 
 func (obj *Ctrl) processStructInfo(structinfo []structInfo, corp *EsiCorp, char *EsiChar) {

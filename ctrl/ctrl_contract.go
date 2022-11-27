@@ -167,13 +167,13 @@ func (obj *Ctrl) convertEsiContract2DB(contr *Contracts) *model.DBContract {
 	newContract.Date_expired = util.ConvertTimeStrToInt(contr.Date_expired)
 	newContract.Date_issued = util.ConvertTimeStrToInt(contr.Date_issued)
 	newContract.Days_to_complete = int(contr.Days_to_complete)
-	newContract.End_location_id = int(contr.End_location_id)
+	newContract.End_location_id = contr.End_location_id
 	newContract.For_corporation = contr.For_corporation
 	newContract.Issuer_corporation_id = int(contr.Issuer_corporation_id)
 	newContract.Issuer_id = int(contr.Issuer_id)
 	newContract.Price = contr.Price
 	newContract.Reward = contr.Reward
-	newContract.Start_location_id = int(contr.Start_location_id)
+	newContract.Start_location_id = contr.Start_location_id
 	newContract.Status = obj.Model.ContractStatusStr2Int(contr.Status)
 	newContract.Title = obj.Model.AddStringEntry(contr.Title)
 	newContract.Type = obj.Model.ContractTypeStr2Int(contr.Type)

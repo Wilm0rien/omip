@@ -73,13 +73,13 @@ type DBContract struct {
 	Date_expired          int64
 	Date_issued           int64
 	Days_to_complete      int
-	End_location_id       int
+	End_location_id       int64
 	For_corporation       bool
 	Issuer_corporation_id int
 	Issuer_id             int
 	Price                 float64
 	Reward                float64
-	Start_location_id     int
+	Start_location_id     int64
 	Status                int
 	Title                 int64
 	Type                  int

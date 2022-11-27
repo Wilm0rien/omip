@@ -41,6 +41,7 @@ type Ctrl struct {
 	LogEntries  []string
 	AddLogCB    func(entry string)
 	GuiStatusCB func(entry string, fieldId int)
+	structCache map[int64]string
 	Up          EsiUpdate
 }
 
@@ -57,6 +58,7 @@ func NewCtrl(model *model.Model) *Ctrl {
 	obj.Svr.cancelChan = make(chan struct{})
 	obj.urlCache = make(map[string]urlCache)
 	obj.ADash = make(map[int]*ADashClient)
+	obj.structCache = make(map[int64]string)
 	obj.populateUpdateFuncList()
 	close(obj.Svr.cancelChan)
 	return &obj
