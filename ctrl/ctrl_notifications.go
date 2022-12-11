@@ -44,6 +44,11 @@ func (obj *Ctrl) UpdateNotifications(char *EsiChar, corp bool) {
 					obj.AddLogEntry(fmt.Sprintf("(Eve Time %s)\n[%s] %s\n ATTACK: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
 				}
 			}
+			if dbNoti.Type == model.NotiMsgTyp_WarDeclared {
+				if dbNoti.TimeStamp > last48h {
+					obj.AddLogEntry(fmt.Sprintf("(Eve Time %s)\n[%s] %s\n WAR DECLARED: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
+				}
+			}
 		}
 	}
 }
