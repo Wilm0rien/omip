@@ -294,7 +294,7 @@ func (obj *Model) createJournalTable() {
 }
 
 func (obj *Model) AddJournalEntry(jouItem *DBJournal) DBresult {
-	whereClause := fmt.Sprintf(`id="%d"`, jouItem.ID)
+	whereClause := fmt.Sprintf(`id="%d" AND charId="%d" AND corpId="%d"`, jouItem.ID, jouItem.CharID, jouItem.CorpID)
 	num := obj.getNumEntries("journal", whereClause)
 	retval := DBR_Undefined
 	if num == 0 {

@@ -98,7 +98,7 @@ func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *Omip
 	obj.WindowPtr = obj.AppPtr.NewWindow(fmt.Sprintf("OMIP - An Eve Online Data Aggregator %s", version))
 	obj.WindowPtr.SetMainMenu(menu)
 	obj.WindowPtr.SetContent(mainContainer)
-	obj.WindowPtr.Resize(fyne.NewSize(2000, 800))
+	obj.WindowPtr.Resize(fyne.NewSize(1920, 800))
 	obj.WindowPtr.SetMaster()
 	obj.AppPtr.Settings().SetTheme(theme.DarkTheme())
 	obj.AppPtr.Settings().Scale()
