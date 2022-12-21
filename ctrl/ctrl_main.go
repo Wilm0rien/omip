@@ -43,6 +43,7 @@ type Ctrl struct {
 	GuiStatusCB func(entry string, fieldId int)
 	structCache map[int64]string
 	Up          EsiUpdate
+	NotifyInfo  map[int64]bool // initialized in UpdateAllData()
 }
 
 type EsiUpdate struct {

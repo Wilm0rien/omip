@@ -27,6 +27,7 @@ func (obj *Ctrl) UpdateNotifications(char *EsiChar, corp bool) {
 		}
 
 		last48h := time.Now().Unix() - 2*24*60*60
+
 		url := fmt.Sprintf("https://esi.evetech.net/v6/characters/%d/notifications/?datasource=tranquility", char.CharInfoData.CharacterID)
 		bodyBytes, _ := obj.getSecuredUrl(url, char)
 
@@ -39,14 +40,17 @@ func (obj *Ctrl) UpdateNotifications(char *EsiChar, corp bool) {
 		for _, noti := range notiList {
 			dbNoti := obj.convertEsiNoti2DB(&noti, char.CharInfoData.CharacterID)
 			obj.Model.AddNotificationEntry(dbNoti)
-			if dbNoti.Type == model.NotiMsgTyp_StructureUnderAttack {
-				if dbNoti.TimeStamp > last48h {
-					obj.AddLogEntry(fmt.Sprintf("(Eve Time %s)\n[%s] %s\n ATTACK: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
+			if _, ok := obj.NotifyInfo[dbNoti.NotificationId]; !ok {
+				obj.NotifyInfo[dbNoti.NotificationId] = true
+				if dbNoti.Type == model.NotiMsgTyp_StructureUnderAttack {
+					if dbNoti.TimeStamp > last48h {
+						obj.AddLogEntry(fmt.Sprintf("(Eve Time %s)\n[%s] %s\n ATTACK: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
+					}
 				}
-			}
-			if dbNoti.Type == model.NotiMsgTyp_WarDeclared {
-				if dbNoti.TimeStamp > last48h {
-					obj.AddLogEntry(fmt.Sprintf("(Eve Time %s)\n[%s] %s\n WAR DECLARED: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
+				if dbNoti.Type == model.NotiMsgTyp_WarDeclared {
+					if dbNoti.TimeStamp > last48h {
+						obj.AddLogEntry(fmt.Sprintf("(Eve Time %s) [%s] %s\n WAR DECLARED: %s", noti.Timestamp, ticker, char.CharInfoData.CharacterName, noti.Type))
+					}
 				}
 			}
 		}

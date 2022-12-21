@@ -251,7 +251,7 @@ func (obj *OmipGui) UpdateAllData() {
 		return
 	}
 	obj.TabPtr.SelectIndex(0)
-
+	obj.Ctrl.NotifyInfo = make(map[int64]bool)
 	prog := obj.Progress
 	finishCb := func() {
 		prog.SetValue(1)

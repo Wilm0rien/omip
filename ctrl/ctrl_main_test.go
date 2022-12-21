@@ -1157,6 +1157,7 @@ func TestNotifications(t *testing.T) {
 		}
 		return bodyBytes, err, resp
 	}
+	ctrlObj.NotifyInfo = make(map[int64]bool)
 	ctrlObj.UpdateNotifications(char, false)
 	notifies := ctrlObj.Model.GetCharNotifications(char.CharInfoData.CharacterID)
 	if len(notifies) == 0 {
