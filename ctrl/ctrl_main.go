@@ -262,6 +262,7 @@ func (obj *Ctrl) CheckUpdatePreCon() (ok bool, err error) {
 func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	obj.Up.UpdateMutex.Lock()
 	defer obj.Up.UpdateMutex.Unlock()
+	obj.NotifyInfo = make(map[int64]bool)
 	totalItems := (len(obj.Esi.EsiCharList) + len(obj.Esi.EsiCorpList) + 1) * len(obj.Up.UpdateFuncList)
 	// add 1 journal request per character and 7 journal requests per corp
 	totalItems += len(obj.Esi.EsiCharList) + (len(obj.Esi.EsiCorpList) * 7)
