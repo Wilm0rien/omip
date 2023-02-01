@@ -42,7 +42,7 @@ func (obj *Model) AddMarketItems(mItems []DBMarketItem) {
 			mItems = mItems[:0]
 		}
 		obj.AddMarketItemsBatch(localList)
-		if len(localList) <= BULK_ITEMS_MAX {
+		if len(mItems) == 0 {
 			running = false
 		}
 	}

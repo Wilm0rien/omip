@@ -55,6 +55,7 @@ type EsiUpdate struct {
 func NewCtrl(model *model.Model) *Ctrl {
 	var obj Ctrl
 	obj.Model = model
+	obj.NotifyInfo = make(map[int64]bool)
 	obj.LogEntries = make([]string, 0, 5)
 	obj.Svr.cancelChan = make(chan struct{})
 	obj.urlCache = make(map[string]urlCache)
@@ -262,7 +263,7 @@ func (obj *Ctrl) CheckUpdatePreCon() (ok bool, err error) {
 func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	obj.Up.UpdateMutex.Lock()
 	defer obj.Up.UpdateMutex.Unlock()
-	obj.NotifyInfo = make(map[int64]bool)
+
 	totalItems := (len(obj.Esi.EsiCharList) + len(obj.Esi.EsiCorpList) + 1) * len(obj.Up.UpdateFuncList)
 	// add 1 journal request per character and 7 journal requests per corp
 	totalItems += len(obj.Esi.EsiCharList) + (len(obj.Esi.EsiCorpList) * 7)
