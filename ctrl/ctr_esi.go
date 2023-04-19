@@ -456,7 +456,9 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 
 		for !requestOK && retrycounter < 3 {
 			bodyBytes2, clientErr, resp := obj.httpClientRequest(req)
-
+			if resp == nil {
+				break
+			}
 			var serverTime int64
 			var expireTime int64
 			if val, ok := resp.Header["Date"]; ok {
