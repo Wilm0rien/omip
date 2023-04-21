@@ -239,7 +239,25 @@ func UnixTS2AdashDateTimeStr(ts int64) string {
 	return fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.0", year, month, day, hour, minute, second)
 }
 
-func GetSortKeysFromStrMap(x interface{}, reverse bool) []string {
+type StringMap[T any] map[string]T
+
+func GetSortKeysFromStrMap[T any](x StringMap[T], reverse bool) []string {
+	var keyList []string
+
+	for key := range x {
+		keyList = append(keyList, key)
+	}
+
+	if reverse {
+		sort.Slice(keyList, func(i, j int) bool { return strings.ToLower(keyList[i]) >= strings.ToLower(keyList[j]) })
+	} else {
+		sort.Slice(keyList, func(i, j int) bool { return strings.ToLower(keyList[i]) < strings.ToLower(keyList[j]) })
+	}
+
+	return keyList
+}
+
+func GetSortKeysFromStrMap2(x interface{}, reverse bool) []string {
 	var keyList []string
 	rValue := reflect.ValueOf(x)
 	Assert(rValue.Kind() == reflect.Map)
