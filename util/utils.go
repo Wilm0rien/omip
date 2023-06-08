@@ -504,3 +504,10 @@ func SendReq(urlStr string) (retval bool) {
 	}
 	return retval
 }
+
+func RemoveIdx[T any](s []T, idx int) []T {
+	if idx < 0 || idx >= len(s) {
+		return s
+	}
+	return append(s[:idx], s[idx+1:]...)
+}
