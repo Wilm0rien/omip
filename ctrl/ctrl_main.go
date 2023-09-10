@@ -315,3 +315,11 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 		finishCb()
 	}
 }
+
+func (obj *Ctrl) GetCorpTicker(char *EsiChar) (corpTicker string) {
+	corpObj := obj.GetCorp(char)
+	if corpObj != nil {
+		corpTicker = corpObj.Ticker
+	}
+	return
+}

@@ -379,13 +379,14 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 			return len(obj.Ctrl.Esi.EsiCharList)
 		},
 		func() fyne.CanvasObject {
-			return container.New(layout.NewGridLayout(7),
+			return container.New(layout.NewGridLayout(8),
 				widget.NewLabel("name"),
 				widget.NewCheck("Contracts", func(bool) {}),
 				widget.NewCheck("Industry", func(bool) {}),
 				widget.NewCheck("KillMails", func(bool) {}),
 				widget.NewCheck("Structures", func(bool) {}),
 				widget.NewCheck("Journal", func(bool) {}),
+				widget.NewCheck("MailLabels", func(bool) {}),
 				widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {}),
 			)
 		},
@@ -415,8 +416,11 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 			item.(*fyne.Container).Objects[5].(*widget.Check).OnChanged = func(b bool) {
 				obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.Journal = b
 			}
-
-			item.(*fyne.Container).Objects[6].(*widget.Button).OnTapped = func() {
+			item.(*fyne.Container).Objects[6].(*widget.Check).SetChecked(obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.MailLabels)
+			item.(*fyne.Container).Objects[6].(*widget.Check).OnChanged = func(b bool) {
+				obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.MailLabels = b
+			}
+			item.(*fyne.Container).Objects[7].(*widget.Button).OnTapped = func() {
 				cnf := dialog.NewConfirm("Confirmation",
 					fmt.Sprintf("REALLY delete %s", char.CharInfoData.CharacterName),
 					func(confirmed bool) {
