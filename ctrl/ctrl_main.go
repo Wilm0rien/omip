@@ -82,7 +82,7 @@ const (
 )
 
 func (obj *Ctrl) populateUpdateFuncList() {
-	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders"}
+	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders", "Mails"}
 	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContracts)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContractItems)
@@ -94,6 +94,8 @@ func (obj *Ctrl) populateUpdateFuncList() {
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateNotifications)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateTransaction)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateOrders)
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateMailLabels)
+
 }
 
 func (obj *Ctrl) UpdateChar(char *EsiChar) {
@@ -314,4 +316,12 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	if finishCb != nil {
 		finishCb()
 	}
+}
+
+func (obj *Ctrl) GetCorpTicker(char *EsiChar) (corpTicker string) {
+	corpObj := obj.GetCorp(char)
+	if corpObj != nil {
+		corpTicker = corpObj.Ticker
+	}
+	return
 }

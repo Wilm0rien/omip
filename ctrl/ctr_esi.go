@@ -38,6 +38,7 @@ type UpdateFlags struct {
 	Killmails    bool
 	Structures   bool
 	Wallet       bool
+	MailLabels   bool
 }
 
 type EsiData struct {
@@ -103,7 +104,7 @@ type ServerStatus struct {
 var NewChar *EsiChar
 
 const (
-	scopes   = "publicData esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1"
+	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1"
 	clientID = "41b2d654515d40b5a04e727a334c6358"
 	callBack = "http://localhost:4716/callback"
 	// id ranges https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb
@@ -296,7 +297,23 @@ func (obj *Ctrl) initialAuth(token string, char *EsiChar) {
 				}
 				obj.InitiateKMSkipList(char, true)
 			}
-			obj.Esi.EsiCharList = append(obj.Esi.EsiCharList, char)
+			found := false
+			foundIdx := 0
+			for idx, existChar := range obj.Esi.EsiCharList {
+				if existChar.CharInfoData.CharacterID == char.CharInfoData.CharacterID {
+					foundIdx = idx
+					found = true
+					break
+				}
+			}
+			if found {
+				// replace token if char exists
+				obj.Esi.EsiCharList[foundIdx] = char
+			} else {
+				// add new char in list
+				obj.Esi.EsiCharList = append(obj.Esi.EsiCharList, char)
+			}
+
 			if obj.AuthCb != nil {
 				obj.AuthCb(char)
 			}
@@ -312,6 +329,7 @@ func (obj *Ctrl) setUpdateFlags(char *EsiChar) {
 	char.UpdateFlags.Killmails = true
 	char.UpdateFlags.Structures = true
 	char.UpdateFlags.Wallet = true
+	char.UpdateFlags.MailLabels = true
 }
 
 func (obj *Ctrl) corpExists(char *EsiChar) bool {
@@ -484,6 +502,14 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					etagTrigger = true
 				} else {
 					delete(obj.Esi.ETags, url)
+				}
+			} else if resp.StatusCode == 403 {
+				matched, _ := regexp.MatchString(`roles`, url)
+				if !matched { // ignore permission error for roles
+					name := fmt.Sprintf("[%s] %s", obj.GetCorpTicker(char), char.CharInfoData.CharacterName)
+					obj.AddLogEntry(fmt.Sprintf("ERROR %s no permission for %s. ", name, url))
+					noError = true // do not report URL failed error
+					break
 				}
 			} else {
 				if clientErr == nil {
