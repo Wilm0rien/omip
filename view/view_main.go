@@ -386,7 +386,7 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 				widget.NewCheck("KillMails", func(bool) {}),
 				widget.NewCheck("Structures", func(bool) {}),
 				widget.NewCheck("Journal", func(bool) {}),
-				widget.NewCheck("MailLabels", func(bool) {}),
+				widget.NewCheck("Mail", func(bool) {}),
 				widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {}),
 			)
 		},

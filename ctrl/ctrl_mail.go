@@ -56,8 +56,6 @@ func (obj *Ctrl) UpdateMailLabels(char *EsiChar, corp bool) {
 		tooMuchFound := false
 		for _, label := range mailStatus.Labels {
 			if label.UnreadCount > 0 && label.UnreadCount <= 3 {
-				//namePrefix := fmt.Sprintf("[%s] %s: ", obj.GetCorpTicker(char), char.CharInfoData.CharacterName)
-				//obj.AddLogEntry(namePrefix + fmt.Sprintf("unread mails in: %s", label.Name))
 				unreadFound = true
 			} else if label.UnreadCount > 3 {
 				namePrefix := fmt.Sprintf("[%s] %s: ", obj.GetCorpTicker(char), char.CharInfoData.CharacterName)
