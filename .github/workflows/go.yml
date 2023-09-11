@@ -23,7 +23,7 @@ jobs:
 
     # Install necessary system dependencies for GLFW and X11
     - name: Install system dependencies
-      run: sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev
+      run: sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev
         
     - uses: evantorrie/mott-the-tidier@v1-beta
       with:
