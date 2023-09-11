@@ -39,7 +39,7 @@ jobs:
           libegl1-mesa-dev \
           xorg-dev
           
-    - uses: evantorrie/mott-the-tidier@v1.1.0
+    - uses: evantorrie/mott-the-tidier@v1-beta
       with:
         gomods: |
           **/go.mod
