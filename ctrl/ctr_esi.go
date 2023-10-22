@@ -60,6 +60,7 @@ type EsiChar struct {
 	NextAuthTimeStamp int64
 	UpdateFlags       UpdateFlags
 	KmSkipList        map[int32]bool // map[KillmailID]bool
+	AuthValid         AuthValid
 }
 type EsiCorp struct {
 	Name          string
@@ -102,6 +103,14 @@ type ServerStatus struct {
 }
 
 var NewChar *EsiChar
+
+type AuthValid int
+
+const (
+	AUTH_STATUS_UNKOWN AuthValid = iota
+	AUTH_STATUS_VALID
+	AUTH_STATUS_INVALID
+)
 
 const (
 	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1"
@@ -266,11 +275,10 @@ func (obj *Ctrl) GetCharInfoExt(char *EsiChar) {
 func (obj *Ctrl) initialAuth(token string, char *EsiChar) {
 	body := fmt.Sprintf("grant_type=authorization_code&code=%s&client_id=%s&code_verifier=%s", token, clientID, obj.Esi.SecretCode)
 
-	auth := obj.doAuthRequest(body)
-	if auth != nil {
+	auth := obj.doAuthRequest(body, char)
+	if auth != nil && char.AuthValid == AUTH_STATUS_VALID {
 		char.InitAuth = *auth
 		char.RefreshAuthData = *auth
-
 		// claims are actually a map[string]interface{}
 		// ESI BUG! if the time between the auth request and the refresh is too short the request will fail!
 		time.Sleep(500 * time.Millisecond)
@@ -319,6 +327,9 @@ func (obj *Ctrl) initialAuth(token string, char *EsiChar) {
 			}
 		}
 	}
+	if char.AuthValid != AUTH_STATUS_VALID {
+		obj.AddLogEntry("ERROR AUTH FAILED")
+	}
 }
 func (obj *Ctrl) setUpdateFlags(char *EsiChar) {
 	char.UpdateFlags.PapLinks = true
@@ -355,7 +366,7 @@ func (obj *Ctrl) CheckIfDirector(char *EsiChar) bool {
 
 func (obj *Ctrl) CheckServerUp(char *EsiChar) (retval bool) {
 	url := fmt.Sprintf("https://esi.evetech.net/v2/status/?datasource=tranquility")
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _ := obj.getUrl(url, char)
 	if bodyBytes != nil {
 		var serverStatus ServerStatus
 		err := json.Unmarshal(bodyBytes, &serverStatus)
@@ -370,23 +381,27 @@ func (obj *Ctrl) CheckServerUp(char *EsiChar) (retval bool) {
 	return
 }
 
-func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) {
+func (obj *Ctrl) RefreshAuth(char *EsiChar, enforce bool) (result bool) {
 	if time.Now().Unix() >= char.NextAuthTimeStamp || enforce {
 		obj.UpdateGuiStatus2(fmt.Sprintf("auth %s", char.CharInfoData.CharacterName))
 		URLEncodedToken := url.QueryEscape(char.InitAuth.RefreshToken)
 		body2 := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s",
 			URLEncodedToken, clientID)
 		var auth *AuthResponse
-		auth = obj.doAuthRequest(body2)
+		auth = obj.doAuthRequest(body2, char)
 		if auth != nil {
 			char.RefreshAuthData = *auth
+			result = true
 		}
 		char.NextAuthTimeStamp =
 			int64(time.Now().Unix()) + int64(char.RefreshAuthData.ExpiresIn-1)
+	} else {
+		result = true
 	}
+	return
 }
 
-func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
+func (obj *Ctrl) doAuthRequest(body string, char *EsiChar) *AuthResponse {
 	url := "https://login.eveonline.com/v2/oauth/token"
 
 	req, err1 := http.NewRequest("POST", url, bytes.NewBufferString(body))
@@ -409,18 +424,30 @@ func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
 		err := json.Unmarshal(bodyBytes, &authVal)
 		if err != nil {
 			obj.AddLogEntry(fmt.Sprintf(err.Error()))
+			char.AuthValid = AUTH_STATUS_INVALID
 		} else {
 			retval = &authVal
+			char.AuthValid = AUTH_STATUS_VALID
 		}
 	} else {
 		obj.AddLogEntry(fmt.Sprintf("ERROR %s %s", resp.Status, string(bodyBytes)))
+		char.AuthValid = AUTH_STATUS_INVALID
 	}
 
 	return retval
 }
 
 func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpages int) {
-	obj.RefreshAuth(char, false)
+	if char.AuthValid == AUTH_STATUS_INVALID {
+		return
+	}
+	if !obj.RefreshAuth(char, false) {
+		return
+	}
+	return obj.getUrl(url, char)
+}
+
+func (obj *Ctrl) getUrl(url string, char *EsiChar) (bodyBytes []byte, Xpages int) {
 	etagTrigger := false
 	timeStart := time.Now()
 
@@ -509,6 +536,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					name := fmt.Sprintf("[%s] %s", obj.GetCorpTicker(char), char.CharInfoData.CharacterName)
 					obj.AddLogEntry(fmt.Sprintf("ERROR %s no permission for %s. ", name, url))
 					noError = true // do not report URL failed error
+					char.AuthValid = AUTH_STATUS_INVALID
 					break
 				}
 			} else {

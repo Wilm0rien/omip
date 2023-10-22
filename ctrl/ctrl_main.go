@@ -248,7 +248,8 @@ func (obj *Ctrl) CheckUpdatePreCon() (ok bool, err error) {
 		err = errors.New("no characters registered to update data")
 		return
 	}
-	if obj.Model.DebounceEntryExists("update_string") {
+
+	if obj.Model.DebounceEntryExists("update_string") && !obj.Model.DebugFlag {
 		err = errors.New("please wait 5 minutes between updates")
 		return
 	}
@@ -274,6 +275,11 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 		obj.UpdateMarket(obj.Esi.EsiCharList[0], false)
 	}
 	for _, char := range obj.Esi.EsiCharList {
+		obj.UpdateWallet(char, false)
+		if char.AuthValid == AUTH_STATUS_INVALID {
+			obj.AddLogEntry(fmt.Sprintf("skipping update for invalid auth for %s", char.CharInfoData.CharacterName))
+			continue
+		}
 		itemCount++
 		// NOTE: the journal has to be updated first to update the journal_links table
 		// this is because only contracts with journal links are identified as relevant for being stored

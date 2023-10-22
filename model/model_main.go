@@ -27,6 +27,7 @@ type Model struct {
 	LogFileHandle   *os.File
 	ItemIDs         map[int]string
 	ItemAvgPrice    map[int]float64
+	DebugFlag       bool
 }
 
 const (
