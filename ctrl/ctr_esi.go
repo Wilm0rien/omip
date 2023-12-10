@@ -39,6 +39,7 @@ type UpdateFlags struct {
 	Structures   bool
 	Wallet       bool
 	MailLabels   bool
+	Assets       bool
 }
 
 type EsiData struct {

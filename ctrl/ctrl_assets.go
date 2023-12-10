@@ -20,7 +20,9 @@ type Asset struct {
 
 func (obj *Ctrl) UpdateAssets(char *EsiChar, corp bool) {
 	var url string
+	timestamp := time.Now().Unix()
 	pageID := 1
+	addedNum := 0
 	for {
 		if corp {
 			url = fmt.Sprintf("https://esi.evetech.net/v5/corporations/%d/assets/?datasource=tranquility&page=%d",
@@ -36,7 +38,12 @@ func (obj *Ctrl) UpdateAssets(char *EsiChar, corp bool) {
 			obj.AddLogEntry(fmt.Sprintf("ERROR reading url %s", url))
 			break
 		}
-		// todo
+		for _, asset := range assetList {
+			dbAsset := obj.convertEsiAsset2DB(timestamp, &asset, char.CharInfoExt.CooperationId, char.CharInfoData.CharacterID)
+			if dbResult := obj.Model.AddAssetEntry(dbAsset); dbResult == model.DBR_Inserted {
+				addedNum++
+			}
+		}
 		if pageID < Xpages {
 			time.Sleep(100 * time.Millisecond)
 			pageID++
@@ -44,9 +51,30 @@ func (obj *Ctrl) UpdateAssets(char *EsiChar, corp bool) {
 			break
 		}
 	}
+	if addedNum > 0 {
+		namePrefix := fmt.Sprintf("[%s] %s: ", obj.GetCorpTicker(char), char.CharInfoData.CharacterName)
+		obj.AddLogEntry(namePrefix + fmt.Sprintf("%d assets added", addedNum))
+	}
 
 }
 
-func (obj *Ctrl) convertEsiAsset2DB(jourEntry *Journal, corpId int, charId int) *model.DBJournal {
-	return nil
+func (obj *Ctrl) convertEsiAsset2DB(timestamp int64, assetEntry *Asset, corpId int,
+	charId int) *model.DBAsset {
+	var newAsset model.DBAsset
+	newAsset.CharID = charId
+	newAsset.CorpID = corpId
+	if assetEntry.IsBlueprintCopy {
+		newAsset.IsBlueprintCopy = 1
+	}
+	if assetEntry.IsSingleton {
+		newAsset.IsBlueprintCopy = 1
+	}
+	newAsset.ItemId = assetEntry.ItemId
+	newAsset.LocationFlag = obj.Model.AddStringEntry(assetEntry.LocationFlag)
+	newAsset.LocationId = assetEntry.LocationId
+	newAsset.LocationType = obj.Model.AddStringEntry(assetEntry.LocationFlag)
+	newAsset.Quantity = int(assetEntry.Quantity)
+	newAsset.TypeId = int(assetEntry.TypeId)
+	newAsset.Timestamp = timestamp
+	return &newAsset
 }
