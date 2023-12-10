@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/Wilm0rien/omip/util"
 )
 
@@ -15,6 +16,7 @@ type DBAsset struct {
 	LocationType    int64
 	Quantity        int
 	TypeId          int
+	Timestamp       int64
 }
 
 func (obj *Model) createAssetTable() {
@@ -30,13 +32,53 @@ func (obj *Model) createAssetTable() {
 			"location_id" INT,
 			"location_type" INT,
 			"quantity" INT,
-			"type_id" INT);`)
+			"type_id" INT,
+		    "timestamp" INT);`)
 		util.CheckErr(err)
 	}
 }
 
 func (obj *Model) AddAssetEntry(asset *DBAsset) DBresult {
-	// todo every assets gets a time stamp value
-	// item_id seems to be unique identifier
-	return 0
+	whereClause := fmt.Sprintf(
+		`item_id="%d" and`+`location_id="%d" and`+
+			`quantity="%d" `, asset.ItemId, asset.LocationId, asset.Quantity)
+	num := obj.getNumEntries("assets", whereClause)
+	retval := DBR_Undefined
+	if num == 0 {
+		stmt, err := obj.DB.Prepare(`
+		INSERT INTO "assets" (
+			charId,
+			corpId,
+			is_blueprint_copy,
+			is_singleton,
+			item_id,
+			location_flag,
+			location_id,
+			location_type,
+			quantity,
+			type_id,
+			timestamp) 
+			values (?,?,?,?,?,?,?,?,?,?,?);`)
+		util.CheckErr(err)
+		defer stmt.Close()
+		res, err := stmt.Exec(
+			asset.CharID,
+			asset.CorpID,
+			asset.IsBlueprintCopy,
+			asset.IsSingleton,
+			asset.ItemId,
+			asset.LocationFlag,
+			asset.LocationId,
+			asset.LocationType,
+			asset.Quantity,
+			asset.TypeId,
+			asset.Timestamp)
+		util.CheckErr(err)
+		affect, err := res.RowsAffected()
+		util.CheckErr(err)
+		if affect > 0 {
+			retval = DBR_Inserted
+		}
+	}
+	return retval
 }

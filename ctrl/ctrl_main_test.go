@@ -111,6 +111,8 @@ func TestInit(t *testing.T) {
 	char.UpdateFlags.PapLinks = true
 	char.UpdateFlags.Killmails = true
 	char.UpdateFlags.Structures = true
+	char.UpdateFlags.Assets = true
+
 	err := ctrlObj.Save(TstCfgJson, true)
 	if err != nil {
 		t.Fatalf("Error writing %s", TstCfgJson)
@@ -1443,4 +1445,87 @@ func TestWallet(t *testing.T) {
 	if !ctrlObj.Model.WalletEntryExists(char.CharInfoData.CharacterID, 0, 0) {
 		t.Errorf("could not find char wallet")
 	}
+}
+
+func TestAssets(t *testing.T) {
+	ctrlObj := initTestObj(t)
+	expiresOn := util.UnixTS2DateTimeStr(time.Now().Add(1199 * time.Second).Unix())
+	testAssetSingletonId := 1042491487363
+	testAssetSingletonLocation := 1031112911964
+	testAssetSingletonLFlag := "CorpSAG3"
+	testAssetSingletonTID := 19725
+
+
+	testAssetId := 1028132445071
+	testAssetLocation := 1031700940306
+	testAssetLFlag := "Unlocked"
+	testAssetTID := 24558
+	testAssetQ:=2
+
+
+	HttpRequestMock = func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
+		resp = &http.Response{
+			StatusCode: http.StatusNotFound,
+		}
+		switch req.URL.String() {
+		case "https://login.eveonline.com/v2/oauth/token":
+			bodyBytes = []byte(`{
+									"access_token": "access_token-dummy-token",
+									"expires_in": 1199,
+									"token_type": "Bearer",
+									"refresh_token": "refresh_token_dummytoken"
+								}`)
+			resp.StatusCode = http.StatusOK
+		case "https://login.eveonline.com/oauth/verify":
+			resultString := fmt.Sprintf(`{
+													"CharacterID": 2115636466,
+													"CharacterName": "Ion of Chios",
+													"ExpiresOn": "%s",
+													"Scopes": "publicData esi-wallet.read_character_wallet.v1 esi-wallet.read_corporation_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-corporations.track_members.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-corporations.read_starbases.v1 esi-industry.read_corporation_jobs.v1",
+													"TokenType": "Character",
+													"CharacterOwnerHash": "dummyhash=",
+													"IntellectualProperty": "EVE"
+												}`,
+				expiresOn)
+			bodyBytes = []byte(resultString)
+			resp.StatusCode = http.StatusOK
+		case "https://esi.evetech.net/v5/characters/2115636466/assets/?datasource=tranquility&page=1":
+			testAssetSingleton := fmt.Sprintf(`
+  {
+    "is_blueprint_copy": true,
+    "is_singleton": true,
+    "item_id": %d,
+    "location_flag": "%s",
+    "location_id": %d,
+    "location_type": "item",
+    "quantity": 1,
+    "type_id": %d
+  }
+`, testAssetSingletonId, testAssetSingletonLFlag, testAssetSingletonLocation, testAssetSingletonTID)
+			bodyBytes = []byte(fmt.Sprintf("[%s]", testAssetSingleton))
+			resp.StatusCode = http.StatusOK
+		case "https://esi.evetech.net/v5/corporations/98627127/assets/?datasource=tranquility&page=1":
+			testAsset := fmt.Sprintf(`
+  {
+    "is_singleton": false,
+    "item_id": %d,
+    "location_flag": "%s",
+    "location_id": %d,
+    "location_type": "item",
+    "quantity": %d,
+    "type_id": %d
+  }
+`, testAssetId, testAssetLFlag, testAssetLocation, testAssetQ, testAssetTID)
+			bodyBytes = []byte(fmt.Sprintf("[%s]", testAsset))
+			resp.StatusCode = http.StatusOK
+		}
+
+		return bodyBytes, err, resp
+	}
+
+	char := ctrlObj.Esi.EsiCharList[0]
+	if !char.UpdateFlags.Assets {
+		t.Fatalf("Assets flag should be written by previous test")
+	}
+	ctrlObj.UpdateAssets(char, false)
 }
