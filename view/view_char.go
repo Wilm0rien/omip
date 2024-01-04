@@ -72,6 +72,9 @@ func (obj *charGuiTable) getCellStrFromList(rowIdx int, colIdx int, inputList []
 			case COVCol0CharName:
 				retval = listElem.Name
 				col = color.NRGBA{62, 160, 221, 0xff}
+				if listElem.char.AuthValid == ctrl.AUTH_STATUS_INVALID {
+					col = color.NRGBA{0xff, 0, 0, 0xff}
+				}
 			case COVCol1Ticker:
 				retval = listElem.Ticker
 			case COVCol2ISK:
@@ -426,7 +429,7 @@ func (obj *OmipGui) CreateCharGui(char *ctrl.EsiChar, isTab bool) fyne.CanvasObj
 	charMain := container.NewTabItem("Overview", container.NewBorder(portrait, nil, nil, nil, overViewtable))
 	industryTabObj, needed := obj.createIndustryTab(localchar, false)
 	charSubTabs := container.NewAppTabs(charMain)
-	if obj.DebugFlag {
+	if obj.Ctrl.Model.DebugFlag {
 		debugTab := obj.CreateCharDebugTab(char)
 		charDebug := container.NewTabItem("debug", container.NewVScroll(debugTab))
 		charSubTabs.Append(charDebug)

@@ -237,7 +237,7 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 	altmapTab := container.NewTabItem("ALTs", obj.createAltTab(director))
 	corpSubTabs := container.NewAppTabs(corpTab)
 	corpSubTabs.Append(altmapTab)
-	if obj.DebugFlag {
+	if obj.Ctrl.Model.DebugFlag {
 		debugVbox := obj.CreateCorpDebugTab(director, corp)
 		corpDebug := container.NewTabItem("debug", container.NewVScroll(debugVbox))
 		corpSubTabs.Append(corpDebug)

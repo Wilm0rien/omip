@@ -42,15 +42,14 @@ type OmipGui struct {
 	CorpTabPtr  *container.DocTabs
 	NotifyEntry *widget.Entry
 	NotifyText  string
-	DebugFlag   bool
 	Version     string
 }
 
 func NewOmipGui(ctrl *ctrl.Ctrl, app fyne.App, debug bool, version string) *OmipGui {
 	var obj OmipGui
 	obj.Version = version
-	obj.DebugFlag = debug
 	obj.Ctrl = ctrl
+	obj.Ctrl.Model.DebugFlag = debug
 	obj.Ctrl.AuthCb = obj.AddEsiKey
 	obj.Ctrl.AddLogCB = obj.AddLogEntry
 	obj.AppPtr = app
