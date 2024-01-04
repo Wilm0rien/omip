@@ -53,7 +53,7 @@ func (obj *Ctrl) UpdateIndustry(char *EsiChar, corp bool) {
 		} else {
 			url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/industry/jobs/?datasource=tranquility", char.CharInfoData.CharacterID)
 		}
-		bodyBytes, Xpages := obj.getSecuredUrl(url, char)
+		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
 		var jobList []JobInfos
 		err := json.Unmarshal(bodyBytes, &jobList)
 		if err != nil {

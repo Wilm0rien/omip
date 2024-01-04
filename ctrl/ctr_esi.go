@@ -253,7 +253,7 @@ func (obj *Ctrl) GetCharInfo(char *EsiChar) {
 func (obj *Ctrl) GetCharInfoExt(char *EsiChar) {
 	url := fmt.Sprintf("https://esi.evetech.net/v5/characters/%d",
 		char.CharInfoData.CharacterID)
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes != nil {
 
 		err := json.Unmarshal(bodyBytes, &char.CharInfoExt)
@@ -346,7 +346,7 @@ func (obj *Ctrl) corpExists(char *EsiChar) bool {
 func (obj *Ctrl) CheckIfDirector(char *EsiChar) bool {
 	var retval bool
 	url := fmt.Sprintf("https://esi.evetech.net/v2/corporations/%d/roles/?datasource=tranquility", char.CharInfoExt.CooperationId)
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes != nil {
 		retval = true
 	}
@@ -355,7 +355,7 @@ func (obj *Ctrl) CheckIfDirector(char *EsiChar) bool {
 
 func (obj *Ctrl) CheckServerUp(char *EsiChar) (retval bool) {
 	url := fmt.Sprintf("https://esi.evetech.net/v2/status/?datasource=tranquility")
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes != nil {
 		var serverStatus ServerStatus
 		err := json.Unmarshal(bodyBytes, &serverStatus)
@@ -419,21 +419,21 @@ func (obj *Ctrl) doAuthRequest(body string) *AuthResponse {
 	return retval
 }
 
-func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpages int) {
+func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpages int, response *http.Response) {
 	obj.RefreshAuth(char, false)
 	etagTrigger := false
 	timeStart := time.Now()
 
 	if len(char.RefreshAuthData.AccessToken) == 0 {
 		obj.AddLogEntry("ERROR  no initial auth saved")
-		return nil, 0
+		return nil, 0, nil
 	} else {
 		obj.UpdateGuiStatus2(url)
 
 		req, err1 := http.NewRequest("GET", url, nil)
 		if err1 != nil {
 			obj.AddLogEntry(fmt.Sprintf("ERROR %s", err1.Error()))
-			return nil, 0
+			return nil, 0, nil
 		}
 
 		req.Header.Add("User-Agent", "Contact: Wilm0rien in game or on devfleet slack")
@@ -476,6 +476,8 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 			bodyBytes2, clientErr, resp := obj.httpClientRequest(req)
 			if resp == nil {
 				break
+			} else {
+				response = resp
 			}
 			var serverTime int64
 			var expireTime int64
@@ -511,6 +513,9 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 					noError = true // do not report URL failed error
 					break
 				}
+			} else if resp.StatusCode == 404 {
+				// not found
+				break
 			} else {
 				if clientErr == nil {
 					responseStr := string(bodyBytes2)
@@ -581,7 +586,7 @@ func (obj *Ctrl) getSecuredUrl(url string, char *EsiChar) (bodyBytes []byte, Xpa
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	return bodyBytes, Xpages
+	return bodyBytes, Xpages, response
 }
 
 func (obj *Ctrl) getSecuredUrlPost(url string, body string, char *EsiChar) (bodyBytes []byte, resp *http.Response) {

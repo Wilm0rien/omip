@@ -19,7 +19,7 @@ func (obj *Ctrl) UpdateWallet(char *EsiChar, corp bool) {
 	} else {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/wallet/?datasource=tranquility", char.CharInfoData.CharacterID)
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes != nil {
 		if corp {
 			var corpWallets []CorpWallet

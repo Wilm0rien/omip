@@ -58,7 +58,7 @@ func (obj *Ctrl) UpdateContracts(char *EsiChar, corp bool) {
 		} else {
 			url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/contracts/?datasource=tranquility&page=%d", char.CharInfoData.CharacterID, pageID)
 		}
-		bodyBytes, Xpages := obj.getSecuredUrl(url, char)
+		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
 		var contractList []Contracts
 		contentError := json.Unmarshal(bodyBytes, &contractList)
 		if contentError != nil {
@@ -205,17 +205,30 @@ func (obj *Ctrl) GetContractItems(char *EsiChar, corp bool, contractID int) {
 	} else {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/contracts/%d/items/", char.CharInfoData.CharacterID, contractID)
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
-	var cntrItemLst []CntrItems
-	contentError := json.Unmarshal(bodyBytes, &cntrItemLst)
-	if contentError != nil {
-		obj.AddLogEntry(fmt.Sprintf("ERROR reading url %s", url))
+	bodyBytes, _, resp := obj.getSecuredUrl(url, char)
+	if resp == nil {
+		obj.AddLogEntry(fmt.Sprintf("ERROR receiving url %s", url))
 	} else {
-		for _, cntrItem := range cntrItemLst {
-			DbContrItem := obj.convertEsiCntrItem2DB(&cntrItem, contractID)
-			obj.Model.AddContrItemEntry(DbContrItem)
+		if resp.StatusCode == 404 {
+			obj.AddLogEntry(fmt.Sprintf("ERROR contract item markt as unkown url %d", contractID))
+			var DbContrItem model.DBContrItem
+			DbContrItem.Contract_id = contractID
+			obj.Model.AddContrItemEntry(&DbContrItem)
+		} else {
+			var cntrItemLst []CntrItems
+			contentError := json.Unmarshal(bodyBytes, &cntrItemLst)
+			if contentError != nil {
+				obj.AddLogEntry(fmt.Sprintf("ERROR reading url %s", url))
+			} else {
+				for _, cntrItem := range cntrItemLst {
+					DbContrItem := obj.convertEsiCntrItem2DB(&cntrItem, contractID)
+					obj.Model.AddContrItemEntry(DbContrItem)
+				}
+			}
 		}
+
 	}
+
 }
 
 func (obj *Ctrl) convertEsiCntrItem2DB(cntrItem *CntrItems, contractID int) *model.DBContrItem {

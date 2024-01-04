@@ -34,7 +34,7 @@ func (obj *Ctrl) UpdateOrders(char *EsiChar, corp bool) {
 	} else {
 		url = fmt.Sprintf("https://esi.evetech.net/v2/characters/%d/orders/?datasource=tranquility", char.CharInfoData.CharacterID)
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var orderList []Order
 	contentError := json.Unmarshal(bodyBytes, &orderList)
 	if contentError != nil {

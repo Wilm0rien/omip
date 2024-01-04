@@ -44,7 +44,7 @@ func (obj *Ctrl) UpdateMailLabels(char *EsiChar, corp bool) {
 	if !char.UpdateFlags.MailLabels {
 		return
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var mailStatus MailStatus
 	fmt.Sprintf("%s", string(bodyBytes))
 	contentError := json.Unmarshal(bodyBytes, &mailStatus)
@@ -71,7 +71,7 @@ func (obj *Ctrl) UpdateMailLabels(char *EsiChar, corp bool) {
 
 func (obj *Ctrl) UpdateMail(char *EsiChar) {
 	url := fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/mail/?datasource=tranquility", char.CharInfoData.CharacterID)
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var mails []Mail
 	contentError := json.Unmarshal(bodyBytes, &mails)
 	if bodyBytes == nil {

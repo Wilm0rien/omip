@@ -38,7 +38,7 @@ func (obj *Ctrl) UpdateTransaction(char *EsiChar, corp bool) {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/wallet/transactions/?datasource=tranquility", char.CharInfoData.CharacterID)
 		charId = char.CharInfoData.CharacterID
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var transactionList []Transaction
 	contentError := json.Unmarshal(bodyBytes, &transactionList)
 	if contentError != nil {

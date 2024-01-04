@@ -14,7 +14,7 @@ type MarketPrice struct {
 
 func (obj *Ctrl) UpdateMarket(char *EsiChar, corp bool) {
 	url := fmt.Sprintf("https://esi.evetech.net/v1/markets/prices/?datasource=tranquility")
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var priceList []MarketPrice
 	contentError := json.Unmarshal(bodyBytes, &priceList)
 	if contentError != nil {

@@ -42,13 +42,13 @@ func (obj *Ctrl) getAuthCorpInfo(char *EsiChar) *EsiCorp {
 		esicorp.Ticker, _ = obj.Model.GetStringEntry(dbcorp.TickerStrRef)
 	} else {
 		url := fmt.Sprintf("https://esi.evetech.net/v5/corporations/%d?datasource=tranquility", char.CharInfoExt.CooperationId)
-		bodyBytes, _ := obj.getSecuredUrl(url, char)
+		bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 		if bodyBytes != nil {
 			var cinfo corpInfo
 			err := json.Unmarshal(bodyBytes, &cinfo)
 			if err != nil {
 				corp := obj.GetCorp(char)
-				corpName:="N/A"
+				corpName := "N/A"
 				if corp != nil {
 					corpName = corp.Name
 				}
@@ -101,7 +101,7 @@ func (obj *Ctrl) UpdateCorpMembers(director *EsiChar, corp bool) {
 	if corp {
 		// esi-corporations.read_corporation_membership.v1
 		url := fmt.Sprintf("https://esi.evetech.net/v4/corporations/%d/members/?datasource=tranquility", director.CharInfoExt.CooperationId)
-		bodyBytes, _ := obj.getSecuredUrl(url, director)
+		bodyBytes, _, _ := obj.getSecuredUrl(url, director)
 		if bodyBytes != nil {
 
 			obj.getMemberNames(string(bodyBytes), director)

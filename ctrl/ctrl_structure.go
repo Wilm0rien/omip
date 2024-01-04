@@ -52,7 +52,7 @@ func (obj *Ctrl) UpdateStructures(char *EsiChar, corp bool) {
 	}
 	if corp {
 		url := fmt.Sprintf("https://esi.evetech.net/v4/corporations/%d/structures/?datasource=tranquility", char.CharInfoExt.CooperationId)
-		bodyBytes, _ := obj.getSecuredUrl(url, char)
+		bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 		var structinfo []structInfo
 		//obj.Model.LogObj.Printf("%s\n", string(bodyBytes))
 		contentError := json.Unmarshal(bodyBytes, &structinfo)
@@ -72,7 +72,7 @@ func (obj *Ctrl) UpdateStructures(char *EsiChar, corp bool) {
 
 func (obj *Ctrl) GetStructureNameFromEsi(char *EsiChar, structureId int64) (retval string) {
 	url := fmt.Sprintf("https://esi.evetech.net/v2/universe/structures/%d/?datasource=tranquility", structureId)
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var structName2 structName
 	contentError := json.Unmarshal(bodyBytes, &structName2)
 	corp := obj.GetCorp(char)

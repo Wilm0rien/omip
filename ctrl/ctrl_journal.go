@@ -37,7 +37,7 @@ func (obj *Ctrl) UpdateJournal(char *EsiChar, corp bool, division int) {
 			url = fmt.Sprintf("https://esi.evetech.net/v6/characters/%d/wallet/journal/?datasource=tranquility&page=%d", char.CharInfoData.CharacterID, pageID)
 			division = 0
 		}
-		bodyBytes, Xpages := obj.getSecuredUrl(url, char)
+		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
 		var journalList []Journal
 		contentError := json.Unmarshal(bodyBytes, &journalList)
 		if contentError != nil {

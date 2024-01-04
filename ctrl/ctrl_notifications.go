@@ -29,7 +29,7 @@ func (obj *Ctrl) UpdateNotifications(char *EsiChar, corp bool) {
 		last48h := time.Now().Unix() - 2*24*60*60
 
 		url := fmt.Sprintf("https://esi.evetech.net/v6/characters/%d/notifications/?datasource=tranquility", char.CharInfoData.CharacterID)
-		bodyBytes, _ := obj.getSecuredUrl(url, char)
+		bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 
 		var notiList []Notification
 		contentError := json.Unmarshal(bodyBytes, &notiList)

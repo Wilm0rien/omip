@@ -68,7 +68,7 @@ func (obj *Ctrl) InitiateKMSkipList(char *EsiChar, corp bool) {
 	} else {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/killmails/recent/", char.CharInfoData.CharacterID)
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var kmList []KillMailsRecent_t
 	contentError := json.Unmarshal(bodyBytes, &kmList)
 	if contentError != nil {
@@ -145,7 +145,7 @@ func (obj *Ctrl) UpdateKillMails(char *EsiChar, corp bool) {
 		url = fmt.Sprintf("https://esi.evetech.net/v1/characters/%d/killmails/recent/", char.CharInfoData.CharacterID)
 		kmSkipList = char.KmSkipList
 	}
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	var kmList []KillMailsRecent_t
 	contentError := json.Unmarshal(bodyBytes, &kmList)
 	if contentError != nil {
@@ -205,7 +205,7 @@ func (obj *Ctrl) GetKillMail(char *EsiChar, dbKM *model.DBKillmail,
 	nameMapping map[int]string, lossMapping map[string]float64) {
 
 	url := fmt.Sprintf("https://esi.evetech.net/v1/killmails/%d/%s", dbKM.Killmail_id, dbKM.Killmail_hash)
-	bodyBytes, _ := obj.getSecuredUrl(url, char)
+	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes == nil {
 		return
 	}
