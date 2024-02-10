@@ -84,7 +84,7 @@ func (obj *Model) AddMiningObsEntry(item *DBMiningObserver) DBresult {
 
 func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 	retval := DBR_Undefined
-	whereClause := fmt.Sprintf(`ObserverID="%d" AND LastUpdated=%d AND CharID=%d AND TypeID=%d`,
+	whereClause := fmt.Sprintf(`ObserverID=%d AND LastUpdated=%d AND CharID=%d AND TypeID=%d`,
 		item.ObserverID, item.LastUpdated, item.CharacterID, item.TypeID)
 	num := obj.getNumEntries("mining_data", whereClause)
 	if num == 0 {
@@ -104,6 +104,7 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 			item.CharacterID,
 			item.LastUpdated,
 			item.Quantity,
+			item.RecordedCorporationID,
 			item.TypeID)
 		util.CheckErr(err)
 		affect, err := res.RowsAffected()

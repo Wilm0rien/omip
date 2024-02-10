@@ -1413,3 +1413,10 @@ func TestWallet(t *testing.T) {
 		t.Errorf("could not find char wallet")
 	}
 }
+
+func TestMiningObserver(t *testing.T) {
+	ctrlObj := initTestObj(t)
+	char := ctrlObj.Esi.EsiCharList[0]
+	ctrlObj.UpdateCorpMiningObs(char, true)
+
+}

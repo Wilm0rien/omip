@@ -387,7 +387,49 @@ func (obj *Ctrl) GetRequestMock() (result ReqMockFuncT) {
 				  "solar_system_id": 40001725,
 				  "type_id": 35825
 			}`)
-
+		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers?datasource=tranquility&page=1":
+			bodyBytes = []byte(`
+			[
+				{
+					"last_updated": "2024-02-10",
+					"observer_id": 1000000000001,
+					"observer_type": "structure"
+				}
+			]
+			`)
+		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000001/?datasource=tranquility&page=1":
+			bodyBytes = []byte(`
+			[
+			  {
+				"last_updated": "2024-02-10",
+				"character_id": 2115636466,
+				"recorded_corporation_id": 98627127,
+				"type_id": 17448,
+				"quantity": 2292
+			  },
+			  {
+				"last_updated": "2024-02-10",
+				"character_id": 2115636466,
+				"recorded_corporation_id": 98627127,
+				"type_id": 17452,
+				"quantity": 1250
+			  },
+			  {
+				"last_updated": "2024-02-10",
+				"character_id": 2115636466,
+				"recorded_corporation_id": 98627127,
+				"type_id": 20,
+				"quantity": 1265
+			  },
+			  {
+				"last_updated": "2024-02-10",
+				"character_id": 2115636466,
+				"recorded_corporation_id": 98627127,
+				"type_id": 17449,
+				"quantity": 6888
+			  }
+			]
+			`)
 		default:
 			log.Printf("ERROR cannot find URL %s", req.URL.String())
 
