@@ -33,7 +33,9 @@ const (
 func Assert(value bool) {
 	if !value {
 		panic("assert")
+
 	}
+
 }
 
 func Exists(name string) bool {

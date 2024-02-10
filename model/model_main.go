@@ -135,7 +135,7 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	obj.createNotificationTable()
 	obj.createPriceTable()
 	obj.createTransactionsTable()
-
+	obj.createMiningObserverTable()
 	mItems := obj.GetMarketItems()
 	for _, item := range mItems {
 		obj.ItemAvgPrice[item.TypeId] = item.AveragePrice
