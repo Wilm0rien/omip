@@ -434,6 +434,20 @@ func ConvertTimeStrToInt(timeString string) int64 {
 	return retval
 }
 
+func ConvertDateStrToInt(timeString string) int64 {
+	var retval int64
+	if timeString != "" {
+		t, err := time.Parse("2006-01-02", timeString)
+		if err != nil {
+			fmt.Println(err)
+			log.Printf("ConvertTimeStrToInt ERROR PARSING TIME %s", timeString)
+		} else {
+			retval = t.Unix()
+		}
+	}
+	return retval
+}
+
 func ConvertServerTimeStrToInt(timeString string) int64 {
 	var retval int64
 	if timeString != "" {

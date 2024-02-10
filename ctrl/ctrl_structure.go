@@ -114,6 +114,7 @@ func (obj *Ctrl) getSystemName(structureID int64, char *EsiChar) (name string) {
 }
 
 func (obj *Ctrl) GetStructureNameCached(structureID int64, char *EsiChar) (name string) {
+	name = fmt.Sprintf("UNKOWN_ID_%d", structureID)
 	if val, ok := obj.structCache[structureID]; ok {
 		name = val
 	} else {
@@ -126,7 +127,6 @@ func (obj *Ctrl) GetStructureNameCached(structureID int64, char *EsiChar) (name 
 				} else {
 					name = uniName
 				}
-
 			} else {
 				name = obj.GetStructureNameFromEsi(char, structureID)
 			}

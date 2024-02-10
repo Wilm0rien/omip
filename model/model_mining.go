@@ -11,13 +11,35 @@ type DBMiningObserver struct {
 	ObserverType int64
 }
 
+type DBMiningData struct {
+	LastUpdated           int64
+	CharacterID           int
+	RecordedCorporationID int
+	TypeID                int
+	Quantity              int
+	ObserverID            int64
+}
+
 func (obj *Model) createMiningObserverTable() {
 	if !obj.checkTableExists("mining_observers") {
 		_, err := obj.DB.Exec(`
-		CREATE TABLE "journal_links" (
+		CREATE TABLE "mining_observers" (
 			"LastUpdated" INT,
 			"ObserverID" INT,
 			"ObserverType" INT);`)
+		util.CheckErr(err)
+	}
+}
+func (obj *Model) createMiningDataTable() {
+	if !obj.checkTableExists("mining_data") {
+		_, err := obj.DB.Exec(`
+		CREATE TABLE "mining_data" (
+		    "ObserverID" INT,
+			"CharID" INT,
+			"LastUpdated" INT,
+			"Quantity" INT,
+			"RecordedCorpID" INT,
+			"TypeID" INT);`)
 		util.CheckErr(err)
 	}
 }
@@ -60,14 +82,47 @@ func (obj *Model) AddMiningObsEntry(item *DBMiningObserver) DBresult {
 	return retval
 }
 
-func (obj *Model) GetLastObsUpdateTime(ObserverID int64) (result int64, found bool) {
-	queryString := fmt.Sprintf("SELECT LastUpdated FROM mining_observers WHERE ObserverID=%d;", ObserverID)
-	rows, err := obj.DB.Query(queryString)
-	util.CheckErr(err)
-	defer rows.Close()
-	for rows.Next() {
-		rows.Scan(&result)
-		found = true
+func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
+	retval := DBR_Undefined
+	whereClause := fmt.Sprintf(`ObserverID="%d" AND LastUpdated=%d AND CharID=%d AND TypeID=%d`,
+		item.ObserverID, item.LastUpdated, item.CharacterID, item.TypeID)
+	num := obj.getNumEntries("mining_data", whereClause)
+	if num == 0 {
+		stmt, err := obj.DB.Prepare(`
+			INSERT INTO "mining_data" (
+			    ObserverID,
+				CharID,
+			    LastUpdated,
+			    Quantity,
+			    RecordedCorpID,
+			    TypeID)
+				VALUES(?,?,?,?,?,?);`)
+		util.CheckErr(err)
+		defer stmt.Close()
+		res, err := stmt.Exec(
+			item.ObserverID,
+			item.CharacterID,
+			item.LastUpdated,
+			item.Quantity,
+			item.TypeID)
+		util.CheckErr(err)
+		affect, err := res.RowsAffected()
+		util.CheckErr(err)
+		if affect > 0 {
+			retval = DBR_Inserted
+		}
+	} else {
+		// update service entry!
+		stmt, err := obj.DB.Prepare(`
+				UPDATE "mining_data" SET 
+				Quantity=?,
+				RecordedCorpID=?
+				WHERE ObserverID=? AND LastUpdated=? AND CharID=? AND TypeID=?;`)
+		util.CheckErr(err)
+		defer stmt.Close()
+		_, err = stmt.Exec(item.Quantity, item.RecordedCorporationID, item.ObserverID, item.LastUpdated, item.CharacterID, item.TypeID)
+		util.CheckErr(err)
+		retval = DBR_Updated
 	}
-	return
+	return retval
 }
