@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -267,7 +268,13 @@ func (obj *Model) getNumEntries(tableName string, whereClause string) int {
 	queryString := fmt.Sprintf(`SELECT  COUNT(*)  from %s WHERE %s;`, tableName, whereClause)
 	rows, err := obj.DB.Query(queryString)
 	util.CheckErr(err)
-	defer rows.Close()
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		} else {
+			log.Printf("cannot close rows %s", debug.Stack())
+		}
+	}()
 	num = 0
 	for rows.Next() {
 		rows.Scan(&num)
