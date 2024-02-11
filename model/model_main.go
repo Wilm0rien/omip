@@ -188,6 +188,16 @@ func (obj *Model) GetTypeString(ID int) string {
 	return retval
 }
 
+func (obj *Model) GetItemID(itemName string) int {
+	var retval int
+	if obj.ItemNames != nil {
+		if val, ok := obj.ItemNames[itemName]; ok {
+			retval = val
+		}
+	}
+	return retval
+}
+
 func (obj *Model) GetMonthlyTable(corpId int, inputTable []*DBTable, maxMonth int) *MonthlyTable {
 	var omipTable MonthlyTable
 	omipTable.ValCharPerMon = make(map[string]map[string]float64)

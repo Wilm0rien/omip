@@ -7,6 +7,7 @@ import (
 	"github.com/Wilm0rien/omip/util"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -161,7 +162,14 @@ func (obj *Ctrl) GenerateMiningData() {
 	Talassonite := []string{"Talassonite", "Hadal Talassonite", "Abyssal Talassonite"}
 	Veldspar := []string{"Veldspar", "Dense Veldspar", "Stable Veldspar", "Concentrated Veldspar"}
 
+	exores := make([][]string, 0, 100)
+	exores = append(exores, Loparite)
+	exores = append(exores, Monazite)
+	exores = append(exores, Xenotime)
+	exores = append(exores, Ytterbite)
+
 	ores := make([]string, 0, 100)
+
 	ores = append(ores, Cobalite...)
 	ores = append(ores, Euxenite...)
 	ores = append(ores, Scheelite...)
@@ -205,19 +213,57 @@ func (obj *Ctrl) GenerateMiningData() {
 	ores = append(ores, Talassonite...)
 	ores = append(ores, Veldspar...)
 
-	log.Printf("%v", ores)
+	for _, ore := range ores {
+		if id := obj.Model.GetItemID(ore); id == 0 {
+			log.Printf("ERROR ID not found for %s", ore)
+		}
+	}
+
+	list := make([]*MiningData, 0, 100)
 	for month := int32(1); month <= 12; month++ {
 		for day := int32(1); day <= 30; day++ {
 			num := 10 + rand.Intn(100)
+			filterMap := make(map[int]map[int]*MiningData)
+
 			for i := 0; i < num; i++ {
+
 				randomChar := rand.Intn(len(charIDs))
 				var newRandObvj MiningData
 				newRandObvj.CharacterID = charIDs[randomChar]
 				newRandObvj.LastUpdated = fmt.Sprintf("2024-%02d-%02d", month, day)
 				newRandObvj.Quantity = int32(1 + rand.Intn(100000))
+				newRandObvj.RecordedCorpId = 98627127
+				randOre := rand.Intn(3)
+				randSubOre := rand.Intn(3)
+				selected := exores[randOre][randSubOre]
+				id := obj.Model.GetItemID(selected)
+				newRandObvj.TypeId = int32(id)
+				if val, ok := filterMap[int(newRandObvj.CharacterID)]; ok {
+					if val2, ok2 := val[id]; ok2 {
+						val2.Quantity += newRandObvj.Quantity
+					} else {
+						filterMap[int(newRandObvj.CharacterID)][id] = &newRandObvj
+					}
+				} else {
+					filterMap[int(newRandObvj.CharacterID)] = make(map[int]*MiningData)
+					filterMap[int(newRandObvj.CharacterID)][id] = &newRandObvj
+				}
 
 			}
+			for _, val := range filterMap {
+				for _, val2 := range val {
+					list = append(list, val2)
+				}
+			}
 		}
+	}
+	data, err := json.MarshalIndent(list, "", "\t")
+	if err != nil {
+		log.Printf("ERROR creating json %s", err.Error())
+	} else {
+		f2, _ := os.Create("output.json")
+		f2.WriteString(string(data))
+		f2.Close()
 	}
 
 }
