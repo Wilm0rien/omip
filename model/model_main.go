@@ -27,6 +27,7 @@ type Model struct {
 	LogObj          *log.Logger
 	LogFileHandle   *os.File
 	ItemIDs         map[int]string
+	ItemNames       map[string]int
 	ItemAvgPrice    map[int]float64
 	DebugFlag       bool
 }
@@ -91,6 +92,7 @@ func NewModel(ldbName string, testEnable bool) *Model {
 
 	obj.ItemIDs = make(map[int]string)
 	obj.ItemAvgPrice = make(map[int]float64)
+	obj.ItemNames = make(map[string]int)
 
 	fileBytes := []byte(SdeData)
 	errJson := json.Unmarshal(fileBytes, &obj.ItemIDs)
@@ -98,6 +100,9 @@ func NewModel(ldbName string, testEnable bool) *Model {
 		obj.LogObj.Printf("ERROR typeIds %s", errJson.Error())
 	}
 
+	for key, value := range obj.ItemIDs {
+		obj.ItemNames[value] = key
+	}
 	if !util.Exists(obj.LocalSqlDb) {
 		obj.createNewDb(obj.LocalSqlDb)
 	} else {
