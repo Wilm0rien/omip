@@ -1416,7 +1416,82 @@ func TestWallet(t *testing.T) {
 
 func TestMiningObserver(t *testing.T) {
 	ctrlObj := initTestObj(t)
+	HttpRequestMock = func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
+		resp = &http.Response{
+			StatusCode: http.StatusNotFound,
+		}
+		switch req.URL.String() {
+		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers?datasource=tranquility&page=1":
+			bodyBytes = []byte(`
+			[
+				{
+					"last_updated": "2024-02-10",
+					"observer_id": 1000000000001,
+					"observer_type": "structure"
+				}
+			]
+			`)
+			resp.StatusCode = http.StatusOK
+		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000001/?datasource=tranquility&page=1":
+			//bodyBytes = []byte(miningData)
+
+			bodyBytes = []byte(`
+				[
+				  {
+					"last_updated": "2024-02-10",
+					"character_id": 2115636466,
+					"recorded_corporation_id": 98627127,
+					"type_id": 17448,
+					"quantity": 2292
+				  },
+				  {
+					"last_updated": "2024-02-10",
+					"character_id": 2115636466,
+					"recorded_corporation_id": 98627127,
+					"type_id": 17452,
+					"quantity": 1250
+				  },
+				  {
+					"last_updated": "2024-02-10",
+					"character_id": 2115636466,
+					"recorded_corporation_id": 98627127,
+					"type_id": 20,
+					"quantity": 1265
+				  },
+				  {
+					"last_updated": "2024-02-10",
+					"character_id": 2115636466,
+					"recorded_corporation_id": 98627127,
+					"type_id": 17449,
+					"quantity": 6888
+				  }
+				]
+				`)
+			resp.StatusCode = http.StatusOK
+		}
+		return bodyBytes, err, resp
+	}
 	char := ctrlObj.Esi.EsiCharList[0]
+	list := ctrlObj.Model.GetMiningData()
+	if len(list) != 0 {
+		t.Error("expected empty database")
+	}
 	ctrlObj.UpdateCorpMiningObs(char, true)
+	list = ctrlObj.Model.GetMiningData()
+	if len(list) != 4 {
+		t.Errorf("expected 4 elements got %d", len(list))
+	}
+	if list[0].TypeID != 17448 {
+		t.Error("unexpected type id")
+	}
+	if list[1].CharacterID != 2115636466 {
+		t.Error("unexpected CharacterID")
+	}
+	if list[2].Quantity != 1265 {
+		t.Error("unexpected Quantity")
+	}
+	if list[3].RecordedCorporationID != 98627127 {
+		t.Error("unexpected RecordedCorporationID")
+	}
 
 }

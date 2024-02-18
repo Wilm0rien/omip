@@ -127,3 +127,27 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 	}
 	return retval
 }
+
+func (obj *Model) GetMiningData() (list []*DBMiningData) {
+	list = make([]*DBMiningData, 0, 1000)
+	queryStr := fmt.Sprint(`SELECT ObserverID, CharID,LastUpdated, Quantity, RecordedCorpID, TypeID FROM mining_data ORDER BY LastUpdated DESC;`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	util.CheckErr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var mininItem DBMiningData
+		rows.Scan(
+			&mininItem.ObserverID,
+			&mininItem.CharacterID,
+			&mininItem.LastUpdated,
+			&mininItem.Quantity,
+			&mininItem.RecordedCorporationID,
+			&mininItem.TypeID,
+		)
+		list = append(list, &mininItem)
+	}
+	return
+}
