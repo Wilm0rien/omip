@@ -1472,12 +1472,20 @@ func TestMiningObserver(t *testing.T) {
 		return bodyBytes, err, resp
 	}
 	char := ctrlObj.Esi.EsiCharList[0]
-	list := ctrlObj.Model.GetMiningData()
+	list := ctrlObj.Model.GetMiningData(char.CharInfoExt.CooperationId)
 	if len(list) != 0 {
 		t.Error("expected empty database")
 	}
 	ctrlObj.UpdateCorpMiningObs(char, true)
-	list = ctrlObj.Model.GetMiningData()
+
+	var dummy model.DBMiningData
+	dummy.OwnerCorpID = 12
+	ctrlObj.Model.AddMiningDataEntry(&dummy)
+	list = ctrlObj.Model.GetMiningData(12)
+	if len(list) != 1 {
+		t.Errorf("expected 1 elements got %d", len(list))
+	}
+	list = ctrlObj.Model.GetMiningData(char.CharInfoExt.CooperationId)
 	if len(list) != 4 {
 		t.Errorf("expected 4 elements got %d", len(list))
 	}
@@ -1491,6 +1499,9 @@ func TestMiningObserver(t *testing.T) {
 		t.Error("unexpected Quantity")
 	}
 	if list[3].RecordedCorporationID != 98627127 {
+		t.Error("unexpected RecordedCorporationID")
+	}
+	if list[3].OwnerCorpID != char.CharInfoExt.CooperationId {
 		t.Error("unexpected RecordedCorporationID")
 	}
 

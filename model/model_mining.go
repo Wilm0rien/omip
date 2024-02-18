@@ -9,6 +9,7 @@ type DBMiningObserver struct {
 	LastUpdated  int64
 	ObserverID   int64
 	ObserverType int64
+	OwnerCorpID  int
 }
 
 type DBMiningData struct {
@@ -18,6 +19,7 @@ type DBMiningData struct {
 	TypeID                int
 	Quantity              int
 	ObserverID            int64
+	OwnerCorpID           int
 }
 
 func (obj *Model) createMiningObserverTable() {
@@ -26,7 +28,8 @@ func (obj *Model) createMiningObserverTable() {
 		CREATE TABLE "mining_observers" (
 			"LastUpdated" INT,
 			"ObserverID" INT,
-			"ObserverType" INT);`)
+			"ObserverType" INT,
+			"OwnerCorpID" INT);`)
 		util.CheckErr(err)
 	}
 }
@@ -39,7 +42,8 @@ func (obj *Model) createMiningDataTable() {
 			"LastUpdated" INT,
 			"Quantity" INT,
 			"RecordedCorpID" INT,
-			"TypeID" INT);`)
+			"TypeID" INT,
+		    "OwnerCorpID" INT);`)
 		util.CheckErr(err)
 	}
 }
@@ -53,14 +57,16 @@ func (obj *Model) AddMiningObsEntry(item *DBMiningObserver) DBresult {
 			INSERT INTO "mining_observers" (
 				LastUpdated,
 				ObserverID,
-				ObserverType)
-				VALUES(?,?,?);`)
+				ObserverType,
+				OwnerCorpID)
+				VALUES(?,?,?,?);`)
 		util.CheckErr(err)
 		defer stmt.Close()
 		res, err := stmt.Exec(
 			item.LastUpdated,
 			item.ObserverID,
-			item.ObserverType)
+			item.ObserverType,
+			item.OwnerCorpID)
 		util.CheckErr(err)
 		affect, err := res.RowsAffected()
 		util.CheckErr(err)
@@ -71,11 +77,12 @@ func (obj *Model) AddMiningObsEntry(item *DBMiningObserver) DBresult {
 		// update service entry!
 		stmt, err := obj.DB.Prepare(`
 				UPDATE "mining_observers" SET 
-				LastUpdated=?
+				LastUpdated=?,
+				OwnerCorpID=?
 				WHERE ObserverID=?;`)
 		util.CheckErr(err)
 		defer stmt.Close()
-		_, err = stmt.Exec(item.LastUpdated, item.ObserverID)
+		_, err = stmt.Exec(item.LastUpdated, item.OwnerCorpID, item.ObserverID)
 		util.CheckErr(err)
 		retval = DBR_Updated
 	}
@@ -95,8 +102,9 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 			    LastUpdated,
 			    Quantity,
 			    RecordedCorpID,
-			    TypeID)
-				VALUES(?,?,?,?,?,?);`)
+			    TypeID,
+			    OwnerCorpID)
+				VALUES(?,?,?,?,?,?,?);`)
 		util.CheckErr(err)
 		defer stmt.Close()
 		res, err := stmt.Exec(
@@ -105,7 +113,8 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 			item.LastUpdated,
 			item.Quantity,
 			item.RecordedCorporationID,
-			item.TypeID)
+			item.TypeID,
+			item.OwnerCorpID)
 		util.CheckErr(err)
 		affect, err := res.RowsAffected()
 		util.CheckErr(err)
@@ -117,24 +126,28 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 		stmt, err := obj.DB.Prepare(`
 				UPDATE "mining_data" SET 
 				Quantity=?,
-				RecordedCorpID=?
+				RecordedCorpID=?,
+				OwnerCorpID=?
 				WHERE ObserverID=? AND LastUpdated=? AND CharID=? AND TypeID=?;`)
 		util.CheckErr(err)
 		defer stmt.Close()
-		_, err = stmt.Exec(item.Quantity, item.RecordedCorporationID, item.ObserverID, item.LastUpdated, item.CharacterID, item.TypeID)
+		_, err = stmt.Exec(item.Quantity, item.RecordedCorporationID, item.OwnerCorpID, item.ObserverID, item.LastUpdated, item.CharacterID, item.TypeID)
 		util.CheckErr(err)
 		retval = DBR_Updated
 	}
 	return retval
 }
 
-func (obj *Model) GetMiningData() (list []*DBMiningData) {
+func (obj *Model) GetMiningData(corpID int) (list []*DBMiningData) {
 	list = make([]*DBMiningData, 0, 1000)
-	queryStr := fmt.Sprint(`SELECT ObserverID, CharID,LastUpdated, Quantity, RecordedCorpID, TypeID FROM mining_data ORDER BY LastUpdated DESC;`)
+	queryStr := fmt.Sprint(`SELECT ObserverID, CharID,LastUpdated, Quantity, RecordedCorpID, TypeID, OwnerCorpID 
+								FROM mining_data 
+								WHERE OwnerCorpID=?
+                                ORDER BY LastUpdated DESC ;`)
 	stmt, err := obj.DB.Prepare(queryStr)
 	util.CheckErr(err)
 	defer stmt.Close()
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(corpID)
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
@@ -146,6 +159,7 @@ func (obj *Model) GetMiningData() (list []*DBMiningData) {
 			&mininItem.Quantity,
 			&mininItem.RecordedCorporationID,
 			&mininItem.TypeID,
+			&mininItem.OwnerCorpID,
 		)
 		list = append(list, &mininItem)
 	}

@@ -42,7 +42,7 @@ func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
 			break
 		}
 		for _, miningObserver := range miningObsList {
-			newObs := obj.convertEsiMOBS2DB(miningObserver)
+			newObs := obj.convertEsiMOBS2DB(miningObserver, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningObsEntry(newObs)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
 			//TODO structureName := obj.GetStructureNameCached(miningObserver.ObserverID, char)
@@ -72,7 +72,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 			break
 		}
 		for _, elem := range miningData {
-			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID)
+			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
 		}
@@ -87,15 +87,16 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 
 }
 
-func (obj *Ctrl) convertEsiMOBS2DB(mObs *MiningObservers) *model.DBMiningObserver {
+func (obj *Ctrl) convertEsiMOBS2DB(mObs *MiningObservers, corpID int) *model.DBMiningObserver {
 	var newMObs model.DBMiningObserver
 	newMObs.LastUpdated = util.ConvertDateStrToInt(mObs.LastUpdated)
 	newMObs.ObserverID = mObs.ObserverID
 	newMObs.ObserverType = obj.Model.AddStringEntry(mObs.ObserverType)
+	newMObs.OwnerCorpID = corpID
 	return &newMObs
 }
 
-func (obj *Ctrl) convertEsiMiningData2DB(md *MiningData, obsID int64) *model.DBMiningData {
+func (obj *Ctrl) convertEsiMiningData2DB(md *MiningData, obsID int64, corpID int) *model.DBMiningData {
 	var newMinDat model.DBMiningData
 	newMinDat.LastUpdated = util.ConvertDateStrToInt(md.LastUpdated)
 	newMinDat.CharacterID = int(md.CharacterID)
@@ -103,6 +104,7 @@ func (obj *Ctrl) convertEsiMiningData2DB(md *MiningData, obsID int64) *model.DBM
 	newMinDat.TypeID = int(md.TypeId)
 	newMinDat.Quantity = int(md.Quantity)
 	newMinDat.ObserverID = obsID
+	newMinDat.OwnerCorpID = corpID
 	return &newMinDat
 }
 
