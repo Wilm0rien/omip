@@ -22,6 +22,13 @@ type DBMiningData struct {
 	OwnerCorpID           int
 }
 
+type ViewMiningData struct {
+	MainID   int
+	MainName string
+	AltName  string
+	DBMiningData
+}
+
 func (obj *Model) createMiningObserverTable() {
 	if !obj.checkTableExists("mining_observers") {
 		_, err := obj.DB.Exec(`
@@ -138,12 +145,27 @@ func (obj *Model) AddMiningDataEntry(item *DBMiningData) DBresult {
 	return retval
 }
 
-func (obj *Model) GetMiningData(corpID int) (list []*DBMiningData) {
-	list = make([]*DBMiningData, 0, 1000)
-	queryStr := fmt.Sprint(`SELECT ObserverID, CharID,LastUpdated, Quantity, RecordedCorpID, TypeID, OwnerCorpID 
-								FROM mining_data 
+func (obj *Model) GetMiningData(corpID int) (list []*ViewMiningData) {
+	list = make([]*ViewMiningData, 0, 1000)
+	queryStr := fmt.Sprint(`
+SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity, 
+       RecordedCorpID, TypeID, OwnerCorpID,
+	   string_table.string as AltName,
+	   stringMain.string as MainName         
+		FROM mining_data 
+		Inner JOIN 
+		   corp_members ON corp_members.character_id = CharID
+		INNER JOIN		   
+			(SELECT character_id, name FROM corp_members) corpRef2Main
+			ON corpRef2Main.character_id = corp_members.main_id
+		INNER JOIN		   
+			string_table ON corp_members.name= string_table.string_hash
+		INNER JOIN		   
+			(SELECT string_hash, string FROM string_table) stringMain
+			ON corpRef2Main.name= stringMain.string_hash							
 								WHERE OwnerCorpID=?
-                                ORDER BY LastUpdated DESC ;`)
+                                ORDER BY LastUpdated DESC;
+`)
 	stmt, err := obj.DB.Prepare(queryStr)
 	util.CheckErr(err)
 	defer stmt.Close()
@@ -151,15 +173,18 @@ func (obj *Model) GetMiningData(corpID int) (list []*DBMiningData) {
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
-		var mininItem DBMiningData
+		var mininItem ViewMiningData
 		rows.Scan(
 			&mininItem.ObserverID,
 			&mininItem.CharacterID,
+			&mininItem.MainID,
 			&mininItem.LastUpdated,
 			&mininItem.Quantity,
 			&mininItem.RecordedCorporationID,
 			&mininItem.TypeID,
 			&mininItem.OwnerCorpID,
+			&mininItem.AltName,
+			&mininItem.MainName,
 		)
 		list = append(list, &mininItem)
 	}

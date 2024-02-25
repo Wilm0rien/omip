@@ -292,7 +292,11 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 		obj.assignRefButton("Journal", refButtonlist, corpSubTabs, len(corpSubTabs.Items))
 		corpSubTabs.Append(jourTab)
 	}
-
+	miningTabObj, miningTabNeeded := obj.createMiningTab(director, true)
+	if miningTabNeeded {
+		miningTab := container.NewTabItem("Mining", miningTabObj)
+		corpSubTabs.Append(miningTab)
+	}
 	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
 	corpSubTabs.OnSelected = func(item *container.TabItem) {
 		obj.recurseRefresh(item)

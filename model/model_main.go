@@ -16,6 +16,13 @@ import (
 	"time"
 )
 
+type SdeTypeMatsStruct struct {
+	MaterialTypeID int `json:"MaterialTypeID"`
+	Quantity       int `json:"Quantity"`
+}
+
+type SdeTypeMatsList map[int][]*SdeTypeMatsStruct
+
 type Model struct {
 	LocalDir        string
 	LocalLogFile    string
@@ -29,6 +36,7 @@ type Model struct {
 	ItemIDs         map[int]string
 	ItemNames       map[string]int
 	ItemAvgPrice    map[int]float64
+	ItemMats        SdeTypeMatsList
 	DebugFlag       bool
 }
 
@@ -61,6 +69,7 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	if testEnable {
 		lLogFileName = LogFileNameTest
 		ldbName = DbNameCtrlTest
+		//ldbName = "omipCtrlTest_mining_copy.db"
 	}
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName
@@ -98,6 +107,11 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	errJson := json.Unmarshal(fileBytes, &obj.ItemIDs)
 	if errJson != nil {
 		obj.LogObj.Printf("ERROR typeIds %s", errJson.Error())
+	}
+	file2bytes := []byte(SdeTypeMats)
+	errJson = json.Unmarshal(file2bytes, &obj.ItemMats)
+	if errJson != nil {
+		obj.LogObj.Printf("ERROR typemats %s", errJson.Error())
 	}
 
 	for key, value := range obj.ItemIDs {
