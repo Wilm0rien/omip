@@ -12,6 +12,7 @@ import (
 	"path"
 	"regexp"
 	"runtime/debug"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -27,6 +28,13 @@ type SdeTypeProps struct {
 }
 
 type SdeTypeMatsList map[int]SdeTypeProps
+
+func (obj *SdeTypeProps) GetVolume() (result float64) {
+	if s, err := strconv.ParseFloat(obj.Volume, 64); err == nil {
+		result = s
+	}
+	return
+}
 
 type Model struct {
 	LocalDir        string
@@ -73,8 +81,8 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	lLogFileName := LogFileName
 	if testEnable {
 		lLogFileName = LogFileNameTest
-		ldbName = DbNameCtrlTest
-		//ldbName = "omipCtrlTest_mining_copy.db"
+		//ldbName = DbNameCtrlTest
+		ldbName = "omipCtrlTest_mining_copy.db"
 	}
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName
@@ -215,6 +223,21 @@ func (obj *Model) GetItemID(itemName string) int {
 		}
 	}
 	return retval
+}
+
+func (obj *Model) GetSdePropsByID(ID int) (result *SdeTypeProps) {
+	if obj.ItemMats != nil {
+		if val, ok := obj.ItemMats[ID]; ok {
+			result = &val
+		}
+	}
+	return
+}
+func (obj *Model) GetSdePropsByName(name string) (result *SdeTypeProps) {
+	if id := obj.GetItemID(name); id != 0 {
+		result = obj.GetSdePropsByID(id)
+	}
+	return
 }
 
 func (obj *Model) GetMonthlyTable(corpId int, inputTable []*DBTable, maxMonth int) *MonthlyTable {

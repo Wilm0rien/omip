@@ -190,3 +190,49 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 	}
 	return
 }
+
+func (obj *Model) GetMiningFiltered(corpId int, mainId int, startTS int64, endTS int64) (list []*ViewMiningData) {
+	list = make([]*ViewMiningData, 0, 1000)
+	queryStr := fmt.Sprint(`
+SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity, 
+       RecordedCorpID, TypeID, OwnerCorpID,
+	   string_table.string as AltName,
+	   stringMain.string as MainName         
+		FROM mining_data 
+		Inner JOIN 
+		   corp_members ON corp_members.character_id = CharID
+		INNER JOIN		   
+			(SELECT character_id, name FROM corp_members) corpRef2Main
+			ON corpRef2Main.character_id = corp_members.main_id
+		INNER JOIN		   
+			string_table ON corp_members.name= string_table.string_hash
+		INNER JOIN		   
+			(SELECT string_hash, string FROM string_table) stringMain
+			ON corpRef2Main.name= stringMain.string_hash							
+		WHERE OwnerCorpID=? AND corpRef2Main.character_id=? AND LastUpdated>=? and LastUpdated<?
+        ORDER BY LastUpdated DESC;
+`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId, mainId, startTS, endTS)
+	util.CheckErr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var mininItem ViewMiningData
+		rows.Scan(
+			&mininItem.ObserverID,
+			&mininItem.CharacterID,
+			&mininItem.MainID,
+			&mininItem.LastUpdated,
+			&mininItem.Quantity,
+			&mininItem.RecordedCorporationID,
+			&mininItem.TypeID,
+			&mininItem.OwnerCorpID,
+			&mininItem.AltName,
+			&mininItem.MainName,
+		)
+		list = append(list, &mininItem)
+	}
+	return
+}
