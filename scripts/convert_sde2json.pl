@@ -13,31 +13,6 @@ my $file = "sde/fsd/typeIDs.yaml";
 
 
 
-
-open(FH, '>', "typeIDs.json_updated") or die $!;
-
-
-my $info  = Archive::Zip::MemberRead->new($zip, $file);
-my $result_hash;
-my $current_type_ID=0;
-my $name_ok = 0;
-while( my $line = $info->getline({ preserve_line_ending => 1 }))  {   
-    if ($line=~/^([0-9]+):$/){
-      $current_type_ID = $1;
-    }
-    if ($line=~/^\s+name:$/){
-      $name_ok = 1;
-    }
-    if ($name_ok == 1) {
-      if ($line=~/^\s+en: (.*)/){
-        $name_ok = 0;
-        $result_hash->{$current_type_ID} = $1;
-      }
-    }
-}
-
-
-
 # extract only the following ores from the typeMaterials.yaml
 my @ores = (
 	"Cobaltite", "Copious Cobaltite", "Twinkling Cobaltite",
@@ -93,6 +68,42 @@ my @ores = (
 	"Talassonite", "Hadal Talassonite", "Abyssal Talassonite",
 	"Veldspar", "Dense Veldspar", "Stable Veldspar", "Concentrated Veldspar",
 );
+my $ore_map;
+foreach my $ore (@ores)
+{
+    $ore_map->{$ore} = 1;
+}
+
+open(FH, '>', "typeIDs.json_updated") or die $!;
+
+my $ore_volumes;
+my $info  = Archive::Zip::MemberRead->new($zip, $file);
+my $result_hash;
+my $current_type_ID=0;
+my $name_ok = 0;
+while( my $line = $info->getline({ preserve_line_ending => 1 }))  {   
+    if ($line=~/^([0-9]+):$/){
+      $current_type_ID = $1;
+    }
+    if ($line=~/^\s+name:$/){
+      $name_ok = 1;
+    }
+    if ($name_ok == 1) {
+      if ($line=~/^\s+en: (.*)/){
+        $name_ok = 0;
+        $result_hash->{$current_type_ID} = $1;
+      }
+    }
+    if ($line=~/^\s+volume: (.*)/){
+      if (defined $ore_map->{$result_hash->{$current_type_ID}})
+      {
+        $ore_volumes->{$result_hash->{$current_type_ID}} = $1;
+      }
+    }    
+}
+
+
+
 
 my $id_map;
 foreach my $id (keys %{$result_hash})
@@ -103,17 +114,11 @@ foreach my $id (keys %{$result_hash})
 
 
 
-my $ore_map;
-
-foreach my $ore (@ores)
-{
-    $ore_map->{$ore} = 1;
-}
-
 my $utf8_encoded_json_text = to_json($result_hash, {utf8 => 1, pretty => 1});
 
 print FH $utf8_encoded_json_text;
 close(FH);
+
 my $type_materials_file = "sde/fsd/typeMaterials.yaml";
 my $type_materials_zip  = Archive::Zip::MemberRead->new($zip, $type_materials_file);
 my $type_materials_content = do { local $/; $type_materials_zip->getline() };
@@ -161,10 +166,18 @@ foreach my $mat (keys %{$type_materials_yaml_data})
     # convert strings to integer
     my $part_mat;
     $part_mat->{MaterialTypeID} = int($material->{materialTypeID});
-    $part_mat->{Quantity} = int($material->{quantity});
+    $part_mat->{Quantity} = int($material->{quantity});    
     push @mat_list, $part_mat;
   }
-  $mat_types_omip_style->{int($mat)}=\@mat_list;
+  $mat_types_omip_style->{int($mat)}->{materials}=\@mat_list;
+  if (defined $ore_volumes->{$mat_name})
+  {
+    $mat_types_omip_style->{int($mat)}->{volume}=$ore_volumes->{$mat_name};
+  }
+  else
+  {
+    printf("ERROR could not find volume for %s\n", $mat_name)
+  }
 }
 
 # check very counter if all ores have been found

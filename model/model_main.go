@@ -21,7 +21,12 @@ type SdeTypeMatsStruct struct {
 	Quantity       int `json:"Quantity"`
 }
 
-type SdeTypeMatsList map[int][]*SdeTypeMatsStruct
+type SdeTypeProps struct {
+	Volume    string               `json:"volume"`
+	Materials []*SdeTypeMatsStruct `json:"materials"`
+}
+
+type SdeTypeMatsList map[int]SdeTypeProps
 
 type Model struct {
 	LocalDir        string
