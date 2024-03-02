@@ -109,15 +109,15 @@ func (obj *Ctrl) convertEsiMiningData2DB(md *MiningData, obsID int64, corpID int
 	return &newMinDat
 }
 
-func (obj *Ctrl) getOreValueByM3(oreTypeID int, volumeM3 float64) (value float64, err error) {
+func (obj *Ctrl) GetOreValueByM3(oreTypeID int, volumeM3 float64) (value float64, err error) {
 	if props := obj.Model.GetSdePropsByID(oreTypeID); props != nil {
 		amount := int(volumeM3 / props.GetVolume())
-		value, err = obj.getOreValueByAmount(oreTypeID, amount)
+		value, err = obj.GetOreValueByAmount(oreTypeID, amount)
 	}
 	return
 }
 
-func (obj *Ctrl) getOreValueByAmount(oreTypeID int, amount int) (totalValue float64, err error) {
+func (obj *Ctrl) GetOreValueByAmount(oreTypeID int, amount int) (totalValue float64, err error) {
 	if props := obj.Model.GetSdePropsByID(oreTypeID); props != nil {
 		// example Scordite oreTypeID 1228	amount 1000
 		if numberOfBatches := amount / 100; numberOfBatches != 0 {

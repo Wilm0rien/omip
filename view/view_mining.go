@@ -211,21 +211,38 @@ func (obj *miningDetailTable) SortCol(colIdx int) {
 
 func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyne.CanvasObject, result bool) {
 	maxMonth := 12
+	updateRunning := false
+	lastUpdateTime := time.Now()
 	origMiningData := obj.Ctrl.Model.GetMiningData(char.CharInfoExt.CooperationId)
-	normalizedList := make([]*model.DBTable, 0, 100)
+	normalizedListOre := make([]*model.DBTable, 0, 100)
+	normalizedListIsk := make([]*model.DBTable, 0, 100)
 	for _, elem := range origMiningData {
-		var new_monthly model.DBTable
-		new_monthly.MainName = elem.MainName
-		new_monthly.AltName = elem.AltName
-		new_monthly.Time = elem.LastUpdated
+		var new_monthlyOre model.DBTable
+		new_monthlyOre.MainName = elem.MainName
+		new_monthlyOre.AltName = elem.AltName
+		new_monthlyOre.Time = elem.LastUpdated
 		var volume float64
 		if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
 			volume = props.GetVolume()
 		}
-		new_monthly.Amount = (float64)(elem.Quantity) * volume
-		normalizedList = append(normalizedList, &new_monthly)
+		new_monthlyOre.Amount = (float64)(elem.Quantity) * volume
+
+		var new_monthlyIsk model.DBTable
+		new_monthlyIsk.MainName = elem.MainName
+		new_monthlyIsk.AltName = elem.AltName
+		new_monthlyIsk.Time = elem.LastUpdated
+
+		if value, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
+			new_monthlyIsk.Amount = value
+		} else {
+			new_monthlyIsk.Amount = 0
+		}
+
+		normalizedListOre = append(normalizedListOre, &new_monthlyOre)
+		normalizedListIsk = append(normalizedListIsk, &new_monthlyIsk)
 	}
-	fullList := obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedList, maxMonth)
+	fullListOre := obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListOre, maxMonth)
+	fullListIsk := obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListIsk, maxMonth)
 
 	var tableObj *widget.Table
 	var filterCharName *widget.Entry
@@ -234,14 +251,14 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	var updateColumnWidth func()
 	var filteredList model.MonthlyTable
 
-	if len(fullList.ValCharPerMon) == 0 {
+	if len(fullListOre.ValCharPerMon) == 0 {
 		return retTable, result
 	} else {
 		result = true
 	}
 
 	filteredCharList := make([]string, 0, 10)
-
+	fullList := fullListOre
 	updateLists := func() {
 		filteredCharList = make([]string, 0, 10)
 		filteredList.MaxAllTime = 0
@@ -378,7 +395,12 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 								volume = props.GetVolume()
 							}
 							newElem.oreVolume = int((float64)(elem.Quantity) * volume)
-							newElem.iskValue = 0
+							if oreIskValue, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
+								newElem.iskValue = oreIskValue
+							} else {
+								newElem.iskValue = 0
+							}
+
 							miningDT.fulllist = append(miningDT.fulllist, &newElem)
 						}
 						miningDT.UpdateLists()
@@ -462,16 +484,35 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 			}
 		},
 	)
+	filterDelayFunc := func() {
+		lastUpdateTime = time.Now()
+		if !updateRunning {
+			updateRunning = true
+			go func() {
+				// wait for no change for at least 2s
+				for {
+					if time.Since(lastUpdateTime).Milliseconds() > 500 {
+						updateLists()
+						updateRunning = false
+						break
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}()
+		}
+	}
+
 	filterCharName = widget.NewEntry()
 	filterCharName.PlaceHolder = "filter char name"
 	filterCharName.OnChanged = func(s string) {
-		updateLists()
+		filterDelayFunc()
+
 	}
 
 	filterAmount = widget.NewEntry()
 	filterAmount.PlaceHolder = "filter millions"
 	filterAmount.OnChanged = func(s string) {
-		updateLists()
+		filterDelayFunc()
 	}
 	updateLists()
 
@@ -490,7 +531,18 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	}
 	updateColumnWidth()
 	hintLabel := widget.NewLabel("Hint: Click cell to open character sheet")
-	filtergrid := container.New(layout.NewGridLayout(3), filterCharName, filterAmount, hintLabel)
+	typeSelect := widget.NewSelect([]string{"ORE", "ISK"}, func(s string) {
+		switch s {
+		case "ORE":
+			fullList = fullListOre
+		case "ISK":
+			fullList = fullListIsk
+		}
+		updateLists()
+		bottomRowTable.Refresh()
+	})
+	typeSelect.SetSelected("ORE")
+	filtergrid := container.New(layout.NewGridLayout(4), filterCharName, filterAmount, typeSelect, hintLabel)
 	bottomGrid := container.New(layout.NewGridLayout(1), bottomRowTable, filtergrid)
 	topGrid2 := container.New(layout.NewGridLayout(1), topRowTable)
 	mainbox := container.NewBorder(topGrid2, bottomGrid, nil, nil, tableObj)

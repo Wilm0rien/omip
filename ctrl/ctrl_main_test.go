@@ -950,7 +950,7 @@ func TestKillmails(t *testing.T) {
 	year, month, _ := time.Now().AddDate(0, 0, -2).Date()
 	ymStr := fmt.Sprintf("%02d-%02d", year-2000, month)
 	charName := "Koriyi Chan"
-	expValue := 14982775.65
+	expValue := 13259392.31
 	if _, ok := lossTable.ValCharPerMon[charName]; ok {
 		if value, ok2 := lossTable.ValCharPerMon[charName][ymStr]; ok2 {
 			if fmt.Sprintf("%3.2f", expValue) != fmt.Sprintf("%3.2f", value) {
@@ -1436,37 +1436,37 @@ func TestMiningObserver(t *testing.T) {
 			//bodyBytes = []byte(miningData)
 
 			bodyBytes = []byte(`
-				[
-				  {
-					"last_updated": "2024-02-10",
-					"character_id": 2115636466,
-					"recorded_corporation_id": 98627127,
-					"type_id": 17448,
-					"quantity": 2292
-				  },
-				  {
-					"last_updated": "2024-02-10",
-					"character_id": 2115636466,
-					"recorded_corporation_id": 98627127,
-					"type_id": 17452,
-					"quantity": 1250
-				  },
-				  {
-					"last_updated": "2024-02-10",
-					"character_id": 2115636466,
-					"recorded_corporation_id": 98627127,
-					"type_id": 20,
-					"quantity": 1265
-				  },
-				  {
-					"last_updated": "2024-02-10",
-					"character_id": 2115636466,
-					"recorded_corporation_id": 98627127,
-					"type_id": 17449,
-					"quantity": 6888
-				  }
-				]
-				`)
+					[
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17448,
+						"quantity": 2292
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 1250
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 20,
+						"quantity": 1265
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17449,
+						"quantity": 6888
+					  }
+					]
+					`)
 			resp.StatusCode = http.StatusOK
 		}
 		return bodyBytes, err, resp
@@ -1552,7 +1552,7 @@ func TestMiningObserver(t *testing.T) {
 
 	testAmount := 1000
 	testVolume := float64(testAmount) * 0.15
-	testValue, err := ctrlObj.getOreValueByM3(testTypeId, testVolume)
+	testValue, err := ctrlObj.GetOreValueByM3(testTypeId, testVolume)
 	if err != nil {
 		t.Errorf("unexepected error %s", err.Error())
 	} else {

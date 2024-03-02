@@ -82,7 +82,7 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	if testEnable {
 		lLogFileName = LogFileNameTest
 		ldbName = DbNameCtrlTest
-		//ldbName = "omipCtrlTest_mining_copy.db"
+		ldbName = "omipCtrlTest_copy2.db"
 	}
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName
