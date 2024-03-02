@@ -1505,5 +1505,60 @@ func TestMiningObserver(t *testing.T) {
 	if list[3].OwnerCorpID != char.CharInfoExt.CooperationId {
 		t.Error("unexpected RecordedCorporationID")
 	}
+	testTypeId := 1228
+	typeStr := ctrlObj.Model.GetTypeString(testTypeId)
+	if typeStr != "Scordite" {
+		t.Error("unexpected type string")
+	}
+	if props := ctrlObj.Model.GetSdePropsByID(testTypeId); props != nil {
+		if len(props.Materials) != 2 {
+			t.Fatalf("expected two materials for scordite")
+		}
+		okCnt := 0
+		for _, contMat := range props.Materials {
+			if contMat.MaterialTypeID == 34 { // tritanium
+				if contMat.Quantity != 150 {
+					t.Fatalf("expected 150 tritanium in scordite")
+				}
+				contMatValue, ok := ctrlObj.Model.ItemAvgPrice[contMat.MaterialTypeID]
+				if !ok {
+					t.Fatalf("cannot find tritanium")
+				}
+				if contMatValue == 0 {
+					t.Fatalf("tritanium price empty")
+				}
+				okCnt++
+			}
+			if contMat.MaterialTypeID == 35 { // Pyerite
+				if contMat.Quantity != 90 {
+					t.Fatalf("expected 90 Pyerite in scordite")
+				}
+				contMatValue, ok := ctrlObj.Model.ItemAvgPrice[contMat.MaterialTypeID]
+				if !ok {
+					t.Fatalf("cannot find Pyerite")
+				}
+				if contMatValue == 0 {
+					t.Fatalf("Pyerite price empty")
+				}
+				okCnt++
+			}
+		}
+		if okCnt != 2 {
+			t.Fatalf("could not find expected materials")
+		}
+	} else {
+		t.Fatalf("props not found for scordite")
+	}
+
+	testAmount := 1000
+	testVolume := float64(testAmount) * 0.15
+	testValue, err := ctrlObj.getOreValueByM3(testTypeId, testVolume)
+	if err != nil {
+		t.Errorf("unexepected error %s", err.Error())
+	} else {
+		if int(testValue) != 15522 {
+			t.Errorf("Unexpected value %3.2f", testValue)
+		}
+	}
 
 }

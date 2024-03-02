@@ -2,6 +2,7 @@ package ctrl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
@@ -106,6 +107,37 @@ func (obj *Ctrl) convertEsiMiningData2DB(md *MiningData, obsID int64, corpID int
 	newMinDat.ObserverID = obsID
 	newMinDat.OwnerCorpID = corpID
 	return &newMinDat
+}
+
+func (obj *Ctrl) getOreValueByM3(oreTypeID int, volumeM3 float64) (value float64, err error) {
+	if props := obj.Model.GetSdePropsByID(oreTypeID); props != nil {
+		amount := int(volumeM3 / props.GetVolume())
+		value, err = obj.getOreValueByAmount(oreTypeID, amount)
+	}
+	return
+}
+
+func (obj *Ctrl) getOreValueByAmount(oreTypeID int, amount int) (totalValue float64, err error) {
+	if props := obj.Model.GetSdePropsByID(oreTypeID); props != nil {
+		// example Scordite oreTypeID 1228	amount 1000
+		if numberOfBatches := amount / 100; numberOfBatches != 0 {
+			// number of batches = 10
+			for _, contMat := range props.Materials {
+				// contained Materials in 100m Scordidte: 150 Tritanium + 90 Pyerite
+				if contMatValue, ok := obj.Model.ItemAvgPrice[contMat.MaterialTypeID]; ok && contMatValue != 0 {
+					totalValue += contMatValue * float64(numberOfBatches) * float64(contMat.Quantity)
+				} else {
+					err = errors.New(fmt.Sprintf("item not found ID %d value %3.2f", contMat.MaterialTypeID, contMatValue))
+					totalValue = 0
+					break
+				}
+			}
+		} else {
+			// no error if batch is too small
+		}
+
+	}
+	return
 }
 
 func (obj *Ctrl) GenerateMiningData() {

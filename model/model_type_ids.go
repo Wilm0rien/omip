@@ -47463,12 +47463,12 @@ const MarketPrices = `
   },
   {
     "adjusted_price": 3.6634523435405058,
-    "average_price": 4.42,
+    "average_price": 4.36,
     "type_id": 34
   },
   {
     "adjusted_price": 10.419953298790734,
-    "average_price": 17.66,
+    "average_price": 9.98,
     "type_id": 35
   },
   {
