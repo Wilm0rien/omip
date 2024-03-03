@@ -1,10 +1,12 @@
 package view
 
 import (
+	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Wilm0rien/omip/ctrl"
@@ -302,6 +304,10 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 				}
 				for _, dateStr := range util.GetSortKeysFromStrMap(fullList.ValCharPerMon[charName], false) {
 					amount := fullList.ValCharPerMon[charName][dateStr]
+					// only in ISK view the percentage is relevant
+					if char.GuiSettings.CorpMining.SelType == "ISK" && char.GuiSettings.CorpMining.Percentage != 0 {
+						amount = amount * char.GuiSettings.CorpMining.Percentage / 100
+					}
 					filteredList.ValCharPerMon[charName][dateStr] += amount
 					filteredList.SumInMonth[dateStr] += amount
 					if filteredList.MaxInMonth[dateStr] < filteredList.ValCharPerMon[charName][dateStr] {
@@ -506,14 +512,17 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	filterCharName.PlaceHolder = "filter char name"
 	filterCharName.OnChanged = func(s string) {
 		filterDelayFunc()
-
+		char.GuiSettings.CorpMining.CharName = s
 	}
-
+	filterCharName.SetText(char.GuiSettings.CorpMining.CharName)
 	filterAmount = widget.NewEntry()
 	filterAmount.PlaceHolder = "filter millions"
 	filterAmount.OnChanged = func(s string) {
+		char.GuiSettings.CorpMining.FilterAmount = s
 		filterDelayFunc()
 	}
+	filterAmount.SetText(char.GuiSettings.CorpMining.FilterAmount)
+
 	updateLists()
 
 	updateColumnWidth = func() {
@@ -531,18 +540,58 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	}
 	updateColumnWidth()
 	hintLabel := widget.NewLabel("Hint: Click cell to open character sheet")
+
+	if char.GuiSettings.CorpMining.SelType == "" {
+		char.GuiSettings.CorpMining.SelType = "ISK"
+	}
+
+	percentageEntry := widget.NewEntry()
+	percentageEntry.SetPlaceHolder("Percentage")
+	percentageBtn := widget.NewButton("Update", func() {
+		if s, err := strconv.ParseFloat(percentageEntry.Text, 64); err == nil {
+			if s > 0 && s <= 100 {
+				char.GuiSettings.CorpMining.Percentage = s
+				updateLists()
+			} else {
+				d := dialog.NewError(errors.New(fmt.Sprintf("percentage must be between 0..100 %s", filterAmount.Text)), obj.WindowPtr)
+				d.Show()
+			}
+		} else {
+			d := dialog.NewError(errors.New(fmt.Sprintf("no float number %s %s", filterAmount.Text, err.Error())), obj.WindowPtr)
+			d.Show()
+		}
+	})
+	if char.GuiSettings.CorpMining.Percentage != 0 {
+		percentageEntry.SetText(fmt.Sprintf("%f", char.GuiSettings.CorpMining.Percentage))
+	}
+	percentageGrid := container.NewGridWithColumns(2, percentageEntry, percentageBtn)
+	showHidePerc := func(s string) {
+		switch s {
+		case "ORE":
+			percentageGrid.Hide()
+		case "ISK":
+			percentageGrid.Show()
+		}
+	}
 	typeSelect := widget.NewSelect([]string{"ORE", "ISK"}, func(s string) {
+		char.GuiSettings.CorpMining.SelType = s
 		switch s {
 		case "ORE":
 			fullList = fullListOre
 		case "ISK":
 			fullList = fullListIsk
 		}
+		showHidePerc(s)
 		updateLists()
 		bottomRowTable.Refresh()
 	})
-	typeSelect.SetSelected("ORE")
-	filtergrid := container.New(layout.NewGridLayout(4), filterCharName, filterAmount, typeSelect, hintLabel)
+	if char.GuiSettings.CorpMining.SelType != "" {
+		typeSelect.SetSelected(char.GuiSettings.CorpMining.SelType)
+	} else {
+		char.GuiSettings.CorpMining.SelType = "ISK"
+	}
+	showHidePerc(char.GuiSettings.CorpMining.SelType)
+	filtergrid := container.New(layout.NewGridLayout(5), filterCharName, filterAmount, typeSelect, percentageGrid, hintLabel)
 	bottomGrid := container.New(layout.NewGridLayout(1), bottomRowTable, filtergrid)
 	topGrid2 := container.New(layout.NewGridLayout(1), topRowTable)
 	mainbox := container.NewBorder(topGrid2, bottomGrid, nil, nil, tableObj)

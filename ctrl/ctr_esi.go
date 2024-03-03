@@ -50,6 +50,25 @@ type EsiData struct {
 	CacheEntries map[string]int64  // map[url]=future cache expire unix time stamp
 }
 
+type GuiSettings struct {
+	Jour       JournalSettings
+	CorpMining CorpMiningSettings
+}
+
+type JournalSettings struct {
+	FilterPeriod   string
+	FilterAmount   string
+	FilterRefTypes string
+	FilterDate     string
+}
+
+type CorpMiningSettings struct {
+	CharName     string
+	FilterAmount string
+	SelType      string
+	Percentage   float64
+}
+
 type EsiChar struct {
 	InitAuth          AuthResponse
 	RefreshAuthData   AuthResponse
@@ -61,6 +80,7 @@ type EsiChar struct {
 	UpdateFlags       UpdateFlags
 	KmSkipList        map[int32]bool // map[KillmailID]bool
 	AuthValid         AuthValid
+	GuiSettings       GuiSettings
 }
 type EsiCorp struct {
 	Name          string
