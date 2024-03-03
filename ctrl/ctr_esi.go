@@ -113,7 +113,7 @@ const (
 )
 
 const (
-	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1"
+	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1 esi-industry.read_corporation_mining.v1"
 	clientID = "41b2d654515d40b5a04e727a334c6358"
 	callBack = "http://localhost:4716/callback"
 	// id ranges https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb
