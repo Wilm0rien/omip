@@ -334,9 +334,12 @@ func (obj *Model) getNumEntries(tableName string, whereClause string) int {
 		}
 	}()
 	num = 0
-	for rows.Next() {
-		rows.Scan(&num)
+	if rows != nil {
+		for rows.Next() {
+			rows.Scan(&num)
+		}
 	}
+
 	return num
 }
 
