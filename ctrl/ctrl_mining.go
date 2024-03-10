@@ -32,6 +32,7 @@ type MiningData struct {
 func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
 	// needs esi-industry.read_corporation_mining.v1
 	if !char.UpdateFlags.Mining {
+		obj.AddLogEntry(fmt.Sprintf("UpdateCorpMiningObs disabled for %s %d", char.CharInfoData.CharacterName, char.CharInfoExt.CooperationId))
 		return
 	}
 	pageID := 1
