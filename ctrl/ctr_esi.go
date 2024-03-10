@@ -39,6 +39,7 @@ type UpdateFlags struct {
 	Structures   bool
 	Wallet       bool
 	MailLabels   bool
+	Mining       bool
 }
 
 type EsiData struct {
@@ -376,8 +377,8 @@ func (obj *Ctrl) corpExists(char *EsiChar) bool {
 
 func (obj *Ctrl) CheckIfDirector(char *EsiChar) bool {
 	var retval bool
-	url := fmt.Sprintf("https://esi.evetech.net/v2/corporations/%d/roles/?datasource=tranquility", char.CharInfoExt.CooperationId)
-	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
+	url2 := fmt.Sprintf("https://esi.evetech.net/v2/corporations/%d/roles/?datasource=tranquility", char.CharInfoExt.CooperationId)
+	bodyBytes, _, _ := obj.getSecuredUrl(url2, char)
 	if bodyBytes != nil {
 		retval = true
 	}

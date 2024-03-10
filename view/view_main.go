@@ -378,7 +378,7 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 			return len(obj.Ctrl.Esi.EsiCharList)
 		},
 		func() fyne.CanvasObject {
-			return container.New(layout.NewGridLayout(8),
+			return container.New(layout.NewGridLayout(9),
 				widget.NewLabel("name"),
 				widget.NewCheck("Contracts", func(bool) {}),
 				widget.NewCheck("Industry", func(bool) {}),
@@ -386,6 +386,7 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 				widget.NewCheck("Structures", func(bool) {}),
 				widget.NewCheck("Journal", func(bool) {}),
 				widget.NewCheck("Mail", func(bool) {}),
+				widget.NewCheck("Mining", func(bool) {}),
 				widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {}),
 			)
 		},
@@ -419,7 +420,11 @@ func (obj *OmipGui) keysScreen() fyne.CanvasObject {
 			item.(*fyne.Container).Objects[6].(*widget.Check).OnChanged = func(b bool) {
 				obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.MailLabels = b
 			}
-			item.(*fyne.Container).Objects[7].(*widget.Button).OnTapped = func() {
+			item.(*fyne.Container).Objects[7].(*widget.Check).SetChecked(obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.Mining)
+			item.(*fyne.Container).Objects[7].(*widget.Check).OnChanged = func(b bool) {
+				obj.Ctrl.Esi.EsiCharList[id].UpdateFlags.Mining = b
+			}
+			item.(*fyne.Container).Objects[8].(*widget.Button).OnTapped = func() {
 				cnf := dialog.NewConfirm("Confirmation",
 					fmt.Sprintf("REALLY delete %s", char.CharInfoData.CharacterName),
 					func(confirmed bool) {
@@ -469,7 +474,7 @@ func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
 		obj.Ctrl.AddLogEntry(fmt.Sprintf("ERROR could not read update url %s", updateUrl))
 	} else {
 		if TagName != obj.Version {
-			obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", TagName))
+			//obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", TagName))
 		}
 	}
 	return container.NewBorder(nil, obj.Progress, nil, nil, scroll)

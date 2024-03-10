@@ -31,6 +31,9 @@ type MiningData struct {
 // UpdateCorpMiningObs retrieve list of corp mining observers via /corporation/{corporation_id}/mining/observers/
 func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
 	// needs esi-industry.read_corporation_mining.v1
+	if !char.UpdateFlags.Mining {
+		return
+	}
 	pageID := 1
 	for {
 		url := fmt.Sprintf("https://esi.evetech.net/v1/corporation/%d/mining/observers?datasource=tranquility&page=%d",
