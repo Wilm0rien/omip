@@ -45,6 +45,7 @@ func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
 			obj.AddLogEntry(fmt.Sprintf("ERROR parsing url %s error %s", url, contentError.Error()))
 			break
 		}
+		obj.AddLogEntry(fmt.Sprintf("reading mining observers successful found %d entries", len(miningObsList)))
 		for _, miningObserver := range miningObsList {
 			newObs := obj.convertEsiMOBS2DB(miningObserver, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningObsEntry(newObs)
@@ -69,13 +70,14 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 	for {
 		url := fmt.Sprintf("https://esi.evetech.net/v1/corporation/%d/mining/observers/%d/?datasource=tranquility&page=%d", char.CharInfoExt.CooperationId, observerID, pageID)
 		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
-		var miningData []*MiningData
-		contentError := json.Unmarshal(bodyBytes, &miningData)
+		var miningDataEntry []*MiningData
+		contentError := json.Unmarshal(bodyBytes, &miningDataEntry)
 		if contentError != nil {
 			obj.AddLogEntry(fmt.Sprintf("ERROR parsing url %s error %s", url, contentError.Error()))
 			break
 		}
-		for _, elem := range miningData {
+		obj.AddLogEntry(fmt.Sprintf("reading mining observer %d successful found %d entries", observerID, len(miningDataEntry)))
+		for _, elem := range miningDataEntry {
 			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
