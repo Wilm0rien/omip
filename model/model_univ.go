@@ -79,7 +79,7 @@ func (obj *Model) GetNameByID(eve_id int) (name string) {
 		name, ok = obj.GetStringEntry(UNitem.NameRef)
 		util.Assert(ok)
 	} else {
-		name = "UNKOWN"
+		name = fmt.Sprintf("%d", eve_id)
 	}
 	return name
 }

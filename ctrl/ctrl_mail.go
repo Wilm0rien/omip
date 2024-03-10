@@ -103,9 +103,10 @@ func (obj *Ctrl) fetchNewNames(mails []Mail, char *EsiChar) {
 	}
 }
 
-func (obj *Ctrl) getUniverseNames(unknownIdList []int, char *EsiChar) {
+func (obj *Ctrl) getUniverseNames(unknownIdList []int, char *EsiChar) (result []string) {
 	url := fmt.Sprintf("https://esi.evetech.net/v3/universe/names/")
 	reqMap := make(map[int]int)
+	result = make([]string, 0, 10)
 	for _, elem := range unknownIdList {
 		reqMap[elem] = 1
 	}
@@ -131,6 +132,7 @@ func (obj *Ctrl) getUniverseNames(unknownIdList []int, char *EsiChar) {
 			}
 		}
 	}
+	return
 }
 
 func (obj *Ctrl) convertEsiUEntry2DB(u *universeNames) *model.DBUniverseName {

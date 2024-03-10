@@ -215,14 +215,35 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	maxMonth := 12
 	updateRunning := false
 	lastUpdateTime := time.Now()
-	origMiningData := obj.Ctrl.Model.GetMiningData(char.CharInfoExt.CooperationId)
+	origMiningData := obj.Ctrl.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
+	membermap := make(map[int]int)
+	for _, elem := range origMiningData {
+		membermap[elem.MainID] = 1
+	}
+	obsList := obj.Ctrl.Model.GetCorpObservers(char.CharInfoExt.CooperationId)
+	for _, obsId := range obsList {
+		extList := obj.Ctrl.Model.GetExtMiningData(char.CharInfoExt.CooperationId, obsId)
+		for _, elem := range extList {
+			if _, ok := membermap[elem.MainID]; !ok {
+				origMiningData = append(origMiningData, elem)
+			}
+		}
+		//origMiningData = append(origMiningData, extList...)
+	}
+	if len(origMiningData) == 0 {
+		return nil, false
+	}
 	normalizedListOre := make([]*model.DBTable, 0, 100)
 	normalizedListIsk := make([]*model.DBTable, 0, 100)
+	nameMapping := make(map[string]int)
 	for _, elem := range origMiningData {
 		var new_monthlyOre model.DBTable
-		new_monthlyOre.MainName = elem.MainName
-		new_monthlyOre.AltName = elem.AltName
+		combinedMain := fmt.Sprintf("[%s] %s", elem.Ticker, elem.MainName)
+		combinedAlt := fmt.Sprintf("[%s] %s", elem.Ticker, elem.AltName)
+		new_monthlyOre.MainName = combinedMain
+		new_monthlyOre.AltName = combinedAlt
 		new_monthlyOre.Time = elem.LastUpdated
+		nameMapping[combinedMain] = elem.MainID
 		var volume float64
 		if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
 			volume = props.GetVolume()
@@ -230,8 +251,8 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		new_monthlyOre.Amount = (float64)(elem.Quantity) * volume
 
 		var new_monthlyIsk model.DBTable
-		new_monthlyIsk.MainName = elem.MainName
-		new_monthlyIsk.AltName = elem.AltName
+		new_monthlyIsk.MainName = combinedMain
+		new_monthlyIsk.AltName = combinedAlt
 		new_monthlyIsk.Time = elem.LastUpdated
 
 		if value, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
@@ -261,6 +282,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 	filteredCharList := make([]string, 0, 10)
 	fullList := fullListOre
+	filterReverse := false
 	updateLists := func() {
 		filteredCharList = make([]string, 0, 10)
 		filteredList.MaxAllTime = 0
@@ -274,15 +296,16 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 		keyList := util.GetSortKeysFromStrMap(fullList.ValCharPerMon, false)
 
-		if sortByRow != "Character" {
-			sort.Slice(keyList, func(i, j int) bool {
-				name1 := keyList[i]
-				name2 := keyList[j]
-				compare1 := fullList.ValCharPerMon[name1][sortByRow]
-				compare2 := fullList.ValCharPerMon[name2][sortByRow]
-				return compare1 >= compare2
-			})
-		}
+		sort.Slice(keyList, func(i, j int) bool {
+			name1 := keyList[i]
+			name2 := keyList[j]
+			compare1 := fullList.ValCharPerMon[name1][sortByRow]
+			compare2 := fullList.ValCharPerMon[name2][sortByRow]
+			if filterReverse {
+				return compare1 < compare2
+			}
+			return compare1 >= compare2
+		})
 
 		for _, charName := range keyList {
 			fNameMatch, _ := regexp.MatchString(fmt.Sprintf("(?i)%s", filterCharName.Text), charName)
@@ -324,6 +347,11 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		if updateColumnWidth != nil {
 			updateColumnWidth()
 		}
+		if filterReverse {
+			filterReverse = false
+		} else {
+			filterReverse = true
+		}
 		tableObj.Refresh()
 	}
 	tableObj = widget.NewTable(
@@ -357,12 +385,6 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 			text.Text = outText
 			text.Color = color
 		})
-	memberList := obj.Ctrl.Model.GetDBCorpMembers(char.CharInfoExt.CooperationId)
-	nameMapping := make(map[string]int)
-	for _, member := range memberList {
-		name, _ := obj.Ctrl.Model.GetStringEntry(member.NameRef)
-		nameMapping[name] = member.CharID
-	}
 	wList := make([]*WindowList, 0, 10)
 	tableObj.OnSelected = func(id widget.TableCellID) {
 		tableObj.UnselectAll()
@@ -386,7 +408,14 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 				}
 
 				if !windowFound {
+					if _, ok := nameMapping[charName]; !ok {
+						obj.Ctrl.Model.LogObj.Printf("ERROR %s not found in map", charName)
+						return
+					}
 					list := obj.Ctrl.Model.GetMiningFiltered(char.CharInfoExt.CooperationId, nameMapping[charName], startTime.Unix(), endTime.Unix())
+					if len(list) == 0 {
+						list = obj.Ctrl.Model.GetMiningFilteredExt(nameMapping[charName], startTime.Unix(), endTime.Unix())
+					}
 					if len(list) > 0 {
 						//list = list[:10]
 						miningDT := NewMDT(obj.Ctrl)

@@ -1416,6 +1416,7 @@ func TestWallet(t *testing.T) {
 }
 
 func TestMiningObserver(t *testing.T) {
+
 	ctrlObj := initTestObj(t)
 	HttpRequestMock = func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
 		resp = &http.Response{
@@ -1465,6 +1466,13 @@ func TestMiningObserver(t *testing.T) {
 						"recorded_corporation_id": 98627127,
 						"type_id": 17449,
 						"quantity": 6888
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 96227676,
+						"recorded_corporation_id": 98179071,
+						"type_id": 17449,
+						"quantity": 6888
 					  }
 					]
 					`)
@@ -1473,7 +1481,7 @@ func TestMiningObserver(t *testing.T) {
 		return bodyBytes, err, resp
 	}
 	char := ctrlObj.Esi.EsiCharList[0]
-	list := ctrlObj.Model.GetMiningData(char.CharInfoExt.CooperationId)
+	list := ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
 	if len(list) != 0 {
 		t.Error("expected empty database")
 	}
@@ -1483,11 +1491,11 @@ func TestMiningObserver(t *testing.T) {
 	dummy.OwnerCorpID = 12
 	ctrlObj.Model.AddMiningDataEntry(&dummy)
 	// TODO fix getmining data for non-corp members!
-	list = ctrlObj.Model.GetMiningData(12)
+	list = ctrlObj.Model.GetExtMiningData(char.CharInfoExt.CooperationId, 1000000000001)
 	if len(list) != 1 {
-		t.Logf("TODO fix getmining data for non-corp members! expected 1 elements got %d", len(list))
+		t.Errorf("TODO fix getmining data for non-corp members! expected 1 elements got %d", len(list))
 	}
-	list = ctrlObj.Model.GetMiningData(char.CharInfoExt.CooperationId)
+	list = ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
 	if len(list) != 4 {
 		t.Errorf("expected 4 elements got %d", len(list))
 	}

@@ -346,6 +346,51 @@ func (obj *Ctrl) GetCorpTicker(char *EsiChar) (corpTicker string) {
 	return
 }
 
+const miningData_v1 = `
+					[
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17448,
+						"quantity": 2292
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 1250
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 20,
+						"quantity": 1265
+					  },
+					  {
+						"last_updated": "2024-02-10",
+						"character_id": 2115636466,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17449,
+						"quantity": 6888
+					  }
+					]
+					`
+const miningData_v2 = `
+			[
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 96227676,
+						"recorded_corporation_id": 98179071,
+						"type_id": 17449,
+						"quantity": 6888
+					  }
+					]
+
+`
+
 func (obj *Ctrl) GetRequestMock() (result ReqMockFuncT) {
 	dummyToken := `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJvbWlwIHRlc3QgdG9rZW4iLCJpYXQiOjE2MzU3NTE2NjMsImV4cCI6MTY2NzI4NzY2MywiYXVkIjoid3d3LmV2ZW9ubGluZS5jb20iLCJzdWIiOiJDSEFSQUNURVI6RVZFOjIxMTU2MzY0NjYiLCJuYW1lIjoiSW9uIG9mIENoaW9zIiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIn0.kbAkeoDeGh3Hh5mVtKJNl-vJScbbkOOlTYTs1mR91ZY`
 	expiresOn := util.UnixTS2DateTimeStr(time.Now().Add(1199 * time.Second).Unix())
@@ -387,52 +432,56 @@ func (obj *Ctrl) GetRequestMock() (result ReqMockFuncT) {
 				  "solar_system_id": 40001725,
 				  "type_id": 35825
 			}`)
+		case "https://esi.evetech.net/v2/universe/structures/1000000000002/?datasource=tranquility":
+			bodyBytes = []byte(`
+			{
+				"name": "ShadowSystem - ShadowBase",
+				"owner_id": 98627127,
+				  "position": {
+					"x": -193810504896,
+					"y": -4432966889720,
+					"z": -1161937975641
+				  },
+				  "solar_system_id": 30002780,
+				  "type_id": 35825
+			}`)
 		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers?datasource=tranquility&page=1":
 			bodyBytes = []byte(`
 			[
 				{
-					"last_updated": "2024-02-10",
+					"last_updated": "2024-03-10",
 					"observer_id": 1000000000001,
+					"observer_type": "structure"
+				},
+				{
+					"last_updated": "2024-03-10",
+					"observer_id": 1000000000002,
 					"observer_type": "structure"
 				}
 			]
 			`)
 		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000001/?datasource=tranquility&page=1":
-			bodyBytes = []byte(miningData)
-			/*
-				bodyBytes = []byte(`
-					[
-					  {
-						"last_updated": "2024-02-10",
-						"character_id": 2115636466,
-						"recorded_corporation_id": 98627127,
-						"type_id": 17448,
-						"quantity": 2292
-					  },
-					  {
-						"last_updated": "2024-02-10",
-						"character_id": 2115636466,
-						"recorded_corporation_id": 98627127,
-						"type_id": 17452,
-						"quantity": 1250
-					  },
-					  {
-						"last_updated": "2024-02-10",
-						"character_id": 2115636466,
-						"recorded_corporation_id": 98627127,
-						"type_id": 20,
-						"quantity": 1265
-					  },
-					  {
-						"last_updated": "2024-02-10",
-						"character_id": 2115636466,
-						"recorded_corporation_id": 98627127,
-						"type_id": 17449,
-						"quantity": 6888
-					  }
-					]
-					`)
-			*/
+			bodyBytes = []byte(miningData_v1)
+		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000002/?datasource=tranquility&page=1":
+			bodyBytes = []byte(miningData_v2)
+		case "https://esi.evetech.net/v5/corporations/98179071?datasource=tranquility":
+			bodyBytes = []byte(`
+				{
+				  "alliance_id": 150097440,
+				  "ceo_id": 743137360,
+				  "creator_id": 90813985,
+				  "date_founded": "2013-02-22T21:36:06Z",
+				  "description": "<font size=\"13\" color=\"#99ffffff\"></font><font size=\"12\" color=\"#bfffffff\">Chat (public): </font><font size=\"12\" color=\"#ff6868e1\"><a href=\"joinChannel:-45630598//98179071//57114\">Omicron Pub</a></font><font size=\"12\" color=\"#bfffffff\"> </font>",
+				  "home_station_id": 60003316,
+				  "member_count": 22,
+				  "name": "Omicron Project",
+				  "shares": 1000,
+				  "tax_rate": 0.10000000149011612,
+				  "ticker": "OMIP",
+				  "url": "",
+				  "war_eligible": true
+				}
+`)
 		default:
 			log.Printf("ERROR cannot find URL %s", req.URL.String())
 

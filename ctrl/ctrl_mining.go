@@ -65,7 +65,10 @@ func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
 // getMiningData retrieve Moon mining data via /corporation/{corporation_id}/mining/observers/{observer_id}/
 func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 	// needs esi-industry.read_corporation_mining.v1
-
+	corpCache := make(map[int32]int)
+	charCache := make(map[int32]int)
+	ownMemberIdMap := obj.Model.GetCorpMemberIdMap(char.CharInfoExt.CooperationId)
+	newNameRequests := make([]int, 0, 10)
 	pageID := 1
 	for {
 		url := fmt.Sprintf("https://esi.evetech.net/v1/corporation/%d/mining/observers/%d/?datasource=tranquility&page=%d", char.CharInfoExt.CooperationId, observerID, pageID)
@@ -81,14 +84,34 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
+			// check if corp exists in db
+			if _, ok := corpCache[elem.RecordedCorpId]; !ok {
+				corpCache[elem.RecordedCorpId] = 1
+				// TODO check if corp infos are updated during update routine
+				if _, result := obj.Model.GetCorpInfoEntry(int(elem.RecordedCorpId)); result != model.DBR_Success {
+					if !obj.GetCorpInfoFromEsi(char, int(elem.RecordedCorpId)) {
+						obj.AddLogEntry(fmt.Sprintf("ERROR adding corp id %d", elem.RecordedCorpId))
+					}
+				}
+			}
+			if _, ok2 := ownMemberIdMap[int(elem.CharacterID)]; !ok2 {
+				if _, ok := charCache[elem.CharacterID]; !ok {
+					charCache[elem.RecordedCorpId] = 1
+					if !obj.Model.NameExists(int(elem.CharacterID)) {
+						newNameRequests = append(newNameRequests, int(elem.CharacterID))
+					}
+				}
+			}
 		}
-
 		if pageID < Xpages {
 			time.Sleep(100 * time.Millisecond)
 			pageID++
 		} else {
 			break
 		}
+	}
+	if len(newNameRequests) > 0 {
+		obj.getUniverseNames(newNameRequests, char)
 	}
 
 }
