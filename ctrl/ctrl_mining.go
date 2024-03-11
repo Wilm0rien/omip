@@ -29,7 +29,11 @@ type MiningData struct {
 }
 
 // UpdateCorpMiningObs retrieve list of corp mining observers via /corporation/{corporation_id}/mining/observers/
-func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, _UnusedCorp bool) {
+func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, corp bool) {
+	if corp == false {
+		// skip character update for mining observers
+		return
+	}
 	// needs esi-industry.read_corporation_mining.v1
 	if !char.UpdateFlags.Mining {
 		obj.AddLogEntry(fmt.Sprintf("UpdateCorpMiningObs disabled for %s %d", char.CharInfoData.CharacterName, char.CharInfoExt.CooperationId))
@@ -80,7 +84,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 			obj.AddLogEntry(fmt.Sprintf("ERROR parsing url %s error %s", url, contentError.Error()))
 			break
 		}
-		obj.AddLogEntry(fmt.Sprintf("reading mining observer %d successful found %d entries", observerID, len(miningDataEntry)))
+		obj.AddLogEntry(fmt.Sprintf("reading mining getMiningData %d successful found %d entries", observerID, len(miningDataEntry)))
 		for _, elem := range miningDataEntry {
 			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)

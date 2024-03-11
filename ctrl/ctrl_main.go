@@ -87,7 +87,9 @@ const (
 )
 
 func (obj *Ctrl) populateUpdateFuncList() {
-	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders", "Mails"}
+	// TODO auto connect JobList with UpdateFuncList!
+	// TODO fix CRASH if you do not update both lists!
+	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders", "Mails", "Mining"}
 	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContracts)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContractItems)
@@ -100,7 +102,7 @@ func (obj *Ctrl) populateUpdateFuncList() {
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateTransaction)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateOrders)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateMailLabels)
-
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateCorpMiningObs)
 }
 
 func (obj *Ctrl) UpdateChar(char *EsiChar) {

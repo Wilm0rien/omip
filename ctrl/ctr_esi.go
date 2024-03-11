@@ -362,6 +362,7 @@ func (obj *Ctrl) setUpdateFlags(char *EsiChar) {
 	char.UpdateFlags.Structures = true
 	char.UpdateFlags.Wallet = true
 	char.UpdateFlags.MailLabels = true
+	char.UpdateFlags.Mining = true
 }
 
 func (obj *Ctrl) corpExists(char *EsiChar) bool {
