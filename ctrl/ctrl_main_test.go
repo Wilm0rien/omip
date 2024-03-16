@@ -1424,7 +1424,14 @@ func TestMiningObserver(t *testing.T) {
 		t.Error("expected empty database")
 	}
 	ctrlObj.UpdateCorpMiningObs(char, true)
-
+	baseName1 := ctrlObj.GetStructureNameCached(1000000000001, char)
+	if baseName1 != "PhantomSystem - PhantomBase" {
+		t.Errorf("expected %s", baseName1)
+	}
+	baseName2 := ctrlObj.GetStructureNameCached(1000000000002, char)
+	if baseName2 != "ShadowSystem - ShadowBase" {
+		t.Errorf("expected %s", baseName1)
+	}
 	var dummy model.DBMiningData
 	dummy.OwnerCorpID = 12
 	ctrlObj.Model.AddMiningDataEntry(&dummy)

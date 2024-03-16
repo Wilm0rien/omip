@@ -6,7 +6,7 @@ import (
 
 func TestModelMain(t *testing.T) {
 	DeleteDb(DbNameModelTest)
-	modelObj := NewModel(DbNameModelTest, true)
+	modelObj := NewModel(DbNameModelTest, true, false)
 	tableList := []string{
 		"characters",
 		"debouncing",
@@ -30,7 +30,9 @@ func TestModelMain(t *testing.T) {
 		"notifications",
 		"transactions",
 		"market_prices",
-		"structure_name"}
+		"structure_name",
+		"mining_data",
+		"mining_observers"}
 	for _, tableName := range tableList {
 		if !modelObj.checkTableExists(tableName) {
 			t.Errorf("could not find table %s", tableName)

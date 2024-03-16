@@ -55,7 +55,7 @@ func (obj *Ctrl) UpdateCorpMiningObs(char *EsiChar, corp bool) {
 			newObs := obj.convertEsiMOBS2DB(miningObserver, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningObsEntry(newObs)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
-			//TODO structureName := obj.GetStructureNameCached(miningObserver.ObserverID, char)
+
 			obj.getMiningData(char, miningObserver.ObserverID)
 		}
 		if pageID < Xpages {
@@ -75,6 +75,8 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 	ownMemberIdMap := obj.Model.GetCorpMemberIdMap(char.CharInfoExt.CooperationId)
 	newNameRequests := make([]int, 0, 10)
 	pageID := 1
+	// handle observer name
+	obj.GetStructureNameCached(observerID, char)
 	for {
 		url := fmt.Sprintf("https://esi.evetech.net/v1/corporation/%d/mining/observers/%d/?datasource=tranquility&page=%d", char.CharInfoExt.CooperationId, observerID, pageID)
 		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
@@ -114,6 +116,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 		} else {
 			break
 		}
+
 	}
 	if len(newNameRequests) > 0 {
 		obj.getUniverseNames(newNameRequests, char)
