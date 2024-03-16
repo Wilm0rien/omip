@@ -644,6 +644,9 @@ func (obj *Ctrl) getSecuredUrlPost(url string, body string, char *EsiChar) (body
 	if len(char.RefreshAuthData.AccessToken) == 0 {
 		obj.AddLogEntry("no initial auth saved")
 	} else {
+		if CtrlTestEnable {
+			HttpPostDataMock = body
+		}
 		req, err1 := http.NewRequest("POST", url, bytes.NewBufferString(body))
 		if err1 != nil {
 			obj.AddLogEntry(err1.Error())
@@ -663,8 +666,6 @@ func (obj *Ctrl) getSecuredUrlPost(url string, body string, char *EsiChar) (body
 	}
 	return bodyBytes, resp
 }
-
-var HttpRequestMock func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response)
 
 func (obj *Ctrl) httpClientRequest(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
 	if !CtrlTestEnable {

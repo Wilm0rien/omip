@@ -76,13 +76,15 @@ const (
 	DBR_Skipped
 )
 
-func NewModel(ldbName string, testEnable bool) *Model {
+func NewModel(ldbName string, testEnable bool, debug bool) *Model {
 	var obj Model
 	lLogFileName := LogFileName
 	if testEnable {
 		lLogFileName = LogFileNameTest
 		ldbName = DbNameCtrlTest
-		//ldbName = "omipCtrlTest_copy2.db"
+		if debug {
+			ldbName = "omipCtrlTest_copy3.db"
+		}
 	}
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName

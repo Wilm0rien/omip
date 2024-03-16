@@ -36,7 +36,7 @@ func main() {
 	if util.SendReq(urlStrShutdown) {
 		time.Sleep(400 * time.Millisecond)
 	}
-	modelObj := model.NewModel(model.DbName, *testEnableFlag)
+	modelObj := model.NewModel(model.DbName, *testEnableFlag, *debugEnableFlag)
 	ctrlObj := ctrl.NewCtrl(modelObj)
 	if *genJson {
 		ctrlObj.GenerateMiningData()
