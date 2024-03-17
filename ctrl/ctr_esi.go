@@ -64,10 +64,11 @@ type JournalSettings struct {
 }
 
 type CorpMiningSettings struct {
-	CharName     string
-	FilterAmount string
-	SelType      string
-	Percentage   float64
+	CharName       string
+	FilterAmount   string
+	SelType        string
+	Percentage     float64
+	GroupSelection string
 }
 
 type EsiChar struct {

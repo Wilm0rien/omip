@@ -353,6 +353,47 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 	return
 }
 
+func (obj *Model) GetMiningByCop(corpId int, startTS int64, endTS int64) (list []*ViewMiningData) {
+	list = make([]*ViewMiningData, 0, 1000)
+	queryStr := fmt.Sprint(`
+	SELECT ObserverID, CharID,LastUpdated, Quantity, 
+		   RecordedCorpID, TypeID, OwnerCorpID
+			FROM mining_data 
+			WHERE RecordedCorpID=? AND LastUpdated>=? and LastUpdated<?
+			ORDER BY LastUpdated DESC;
+	`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query(corpId, startTS, endTS)
+	util.CheckErr(err)
+	defer rows.Close()
+	tickerMap := make(map[int]string)
+	for rows.Next() {
+		var mininItem ViewMiningData
+		rows.Scan(
+			&mininItem.ObserverID,
+			&mininItem.CharacterID,
+			&mininItem.LastUpdated,
+			&mininItem.Quantity,
+			&mininItem.RecordedCorporationID,
+			&mininItem.TypeID,
+			&mininItem.OwnerCorpID,
+		)
+		mininItem.MainID = mininItem.CharacterID
+		mininItem.MainName = obj.GetNameByID(mininItem.CharacterID)
+		mininItem.AltName = mininItem.MainName
+		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
+			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
+			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
+		} else {
+			mininItem.Ticker = tickerStr
+		}
+		list = append(list, &mininItem)
+	}
+	return
+}
+
 func (obj *Model) GetCorpObservers(corpId int) (result []int) {
 	result = make([]int, 0, 10)
 	queryStr := fmt.Sprint(`

@@ -1416,7 +1416,6 @@ func TestWallet(t *testing.T) {
 }
 
 func TestMiningObserver(t *testing.T) {
-
 	ctrlObj := initTestObj(t)
 	char := ctrlObj.Esi.EsiCharList[0]
 	list := ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
@@ -1441,16 +1440,16 @@ func TestMiningObserver(t *testing.T) {
 		t.Errorf("TODO fix getmining data for non-corp members! expected 1 elements got %d", len(list))
 	}
 	list = ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
-	if len(list) != 4 {
+	if len(list) != 7 {
 		t.Errorf("expected 4 elements got %d", len(list))
 	}
-	if list[0].TypeID != 17448 {
+	if list[0].TypeID != 17452 {
 		t.Logf("hint! add unkown people")
 	}
-	if list[1].CharacterID != 2115636466 {
+	if list[1].CharacterID != 2115417359 {
 		t.Error("unexpected CharacterID")
 	}
-	if list[2].Quantity != 1265 {
+	if list[2].Quantity != 5000 {
 		t.Error("unexpected Quantity")
 	}
 	if list[3].RecordedCorporationID != 98627127 {

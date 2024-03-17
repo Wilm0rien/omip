@@ -55,7 +55,42 @@ const miningData_v2 = `
 						"character_id": 96227676,
 						"recorded_corporation_id": 98179071,
 						"type_id": 17449,
-						"quantity": 6888
+						"quantity": 20000
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 96338783,
+						"recorded_corporation_id": 98179071,
+						"type_id": 20,
+						"quantity": 10000
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 2115714045,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 5000
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 2115417359,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 5000
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 2115417359,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 5000
+					  },
+					  {
+						"last_updated": "2024-03-09",
+						"character_id": 2114367476,
+						"recorded_corporation_id": 98627127,
+						"type_id": 17452,
+						"quantity": 5000
 					  }
 					]
 
@@ -122,6 +157,11 @@ const universeData = `
 		"category": "character",
 		"id": 96227676,
 		"name": "Ares Aurelius"
+	},
+	{
+		"category": "character",
+		"id": 96338783,
+		"name": "Ood Tau-5"
 	}
 ]
 

@@ -76,7 +76,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 	newNameRequests := make([]int, 0, 10)
 	pageID := 1
 	// handle observer name
-	obj.GetStructureNameCached(observerID, char)
+	strucName := obj.GetStructureNameCached(observerID, char)
 	for {
 		url := fmt.Sprintf("https://esi.evetech.net/v1/corporation/%d/mining/observers/%d/?datasource=tranquility&page=%d", char.CharInfoExt.CooperationId, observerID, pageID)
 		bodyBytes, Xpages, _ := obj.getSecuredUrl(url, char)
@@ -86,7 +86,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 			obj.AddLogEntry(fmt.Sprintf("ERROR parsing url %s error %s", url, contentError.Error()))
 			break
 		}
-		obj.AddLogEntry(fmt.Sprintf("reading mining getMiningData %d successful found %d entries", observerID, len(miningDataEntry)))
+		obj.AddLogEntry(fmt.Sprintf("reading mining getMiningData %s successful found %d entries", strucName, len(miningDataEntry)))
 		for _, elem := range miningDataEntry {
 			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)

@@ -44,6 +44,11 @@ const (
 	MDTCol5IskValue
 )
 
+const (
+	GROUP_SEL_CHAR = "Group By Char"
+	GROUP_SEL_CORP = "Group By Corp"
+)
+
 func NewMDT(ctrl *ctrl.Ctrl) *miningDetailTable {
 	var mDT miningDetailTable
 	mDT.Ctrl = ctrl
@@ -214,6 +219,10 @@ func (obj *miningDetailTable) SortCol(colIdx int) {
 func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyne.CanvasObject, result bool) {
 	maxMonth := 12
 	updateRunning := false
+
+	groupSelectionStr := ""                     // used by groupSelect
+	typeSelectionStr := "ISK"                   // used by typeSelect
+	ColumnHdrCharNameBtnStr := "Character Name" // used to change column header
 	lastUpdateTime := time.Now()
 	origMiningData := obj.Ctrl.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
 	membermap := make(map[int]int)
@@ -233,39 +242,53 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	if len(origMiningData) == 0 {
 		return nil, false
 	}
-	normalizedListOre := make([]*model.DBTable, 0, 100)
-	normalizedListIsk := make([]*model.DBTable, 0, 100)
+
+	var fullListOre *model.MonthlyTable
+	var fullListIsk *model.MonthlyTable
+	tickerMap := make(map[string]int)
 	nameMapping := make(map[string]int)
-	for _, elem := range origMiningData {
-		var new_monthlyOre model.DBTable
-		combinedMain := fmt.Sprintf("[%s] %s", elem.Ticker, elem.MainName)
-		combinedAlt := fmt.Sprintf("[%s] %s", elem.Ticker, elem.AltName)
-		new_monthlyOre.MainName = combinedMain
-		new_monthlyOre.AltName = combinedAlt
-		new_monthlyOre.Time = elem.LastUpdated
-		nameMapping[combinedMain] = elem.MainID
-		var volume float64
-		if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
-			volume = props.GetVolume()
+	// rebuilding is necessary when switching from char view to corp view via groupSelect
+	rebuildMTable := func() {
+		normalizedListOre := make([]*model.DBTable, 0, 100)
+		normalizedListIsk := make([]*model.DBTable, 0, 100)
+
+		for _, elem := range origMiningData {
+			var new_monthlyOre model.DBTable
+			combinedMain := fmt.Sprintf("[%s] %s", elem.Ticker, elem.MainName)
+			combinedAlt := fmt.Sprintf("[%s] %s", elem.Ticker, elem.AltName)
+			if groupSelectionStr == GROUP_SEL_CORP {
+				combinedMain = elem.Ticker
+				combinedAlt = elem.MainName
+			}
+			tickerMap[elem.Ticker] = elem.RecordedCorporationID
+			new_monthlyOre.MainName = combinedMain
+			new_monthlyOre.AltName = combinedAlt
+			new_monthlyOre.Time = elem.LastUpdated
+			nameMapping[combinedMain] = elem.MainID
+			var volume float64
+			if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
+				volume = props.GetVolume()
+			}
+			new_monthlyOre.Amount = (float64)(elem.Quantity) * volume
+
+			var new_monthlyIsk model.DBTable
+			new_monthlyIsk.MainName = combinedMain
+			new_monthlyIsk.AltName = combinedAlt
+			new_monthlyIsk.Time = elem.LastUpdated
+
+			if value, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
+				new_monthlyIsk.Amount = value
+			} else {
+				new_monthlyIsk.Amount = 0
+			}
+
+			normalizedListOre = append(normalizedListOre, &new_monthlyOre)
+			normalizedListIsk = append(normalizedListIsk, &new_monthlyIsk)
 		}
-		new_monthlyOre.Amount = (float64)(elem.Quantity) * volume
-
-		var new_monthlyIsk model.DBTable
-		new_monthlyIsk.MainName = combinedMain
-		new_monthlyIsk.AltName = combinedAlt
-		new_monthlyIsk.Time = elem.LastUpdated
-
-		if value, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
-			new_monthlyIsk.Amount = value
-		} else {
-			new_monthlyIsk.Amount = 0
-		}
-
-		normalizedListOre = append(normalizedListOre, &new_monthlyOre)
-		normalizedListIsk = append(normalizedListIsk, &new_monthlyIsk)
+		fullListOre = obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListOre, maxMonth)
+		fullListIsk = obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListIsk, maxMonth)
 	}
-	fullListOre := obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListOre, maxMonth)
-	fullListIsk := obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListIsk, maxMonth)
+	rebuildMTable()
 
 	var tableObj *widget.Table
 	var filterCharName *widget.Entry
@@ -284,6 +307,12 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	fullList := fullListOre
 	filterReverse := false
 	updateLists := func() {
+		switch typeSelectionStr {
+		case "ORE":
+			fullList = fullListOre
+		case "ISK":
+			fullList = fullListIsk
+		}
 		filteredCharList = make([]string, 0, 10)
 		filteredList.MaxAllTime = 0
 		filteredList.SumInMonth = make(map[string]float64)
@@ -412,10 +441,20 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 						obj.Ctrl.Model.LogObj.Printf("ERROR %s not found in map", charName)
 						return
 					}
-					list := obj.Ctrl.Model.GetMiningFiltered(char.CharInfoExt.CooperationId, nameMapping[charName], startTime.Unix(), endTime.Unix())
-					if len(list) == 0 {
-						list = obj.Ctrl.Model.GetMiningFilteredExt(nameMapping[charName], startTime.Unix(), endTime.Unix())
+					var list []*model.ViewMiningData
+					if groupSelectionStr == GROUP_SEL_CHAR {
+						list = obj.Ctrl.Model.GetMiningFiltered(char.CharInfoExt.CooperationId, nameMapping[charName], startTime.Unix(), endTime.Unix())
+						if len(list) == 0 {
+							list = obj.Ctrl.Model.GetMiningFilteredExt(nameMapping[charName], startTime.Unix(), endTime.Unix())
+						}
+					} else {
+						if corpId, ok := tickerMap[charName]; ok {
+							list = obj.Ctrl.Model.GetMiningByCop(corpId, startTime.Unix(), endTime.Unix())
+						} else {
+							obj.Ctrl.Model.LogObj.Printf("ERROR %s not found in map", charName)
+						}
 					}
+
 					if len(list) > 0 {
 						//list = list[:10]
 						miningDT := NewMDT(obj.Ctrl)
@@ -472,7 +511,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	topRowTable := widget.NewTable(
 		func() (int, int) { return 1, maxMonth + 1 },
 		func() fyne.CanvasObject {
-			topButton := widget.NewButton("Character Name", func() {
+			topButton := widget.NewButton(ColumnHdrCharNameBtnStr, func() {
 				sortByRow = "Character"
 				updateLists()
 			})
@@ -481,7 +520,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		func(id widget.TableCellID, cell fyne.CanvasObject) {
 			button := cell.(*widget.Button)
 			if id.Col == 0 {
-				button.SetText("Character Name")
+				button.SetText(ColumnHdrCharNameBtnStr)
 				button.OnTapped = func() {
 					sortByRow = "Character"
 					updateLists()
@@ -604,23 +643,42 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	}
 	typeSelect := widget.NewSelect([]string{"ORE", "ISK"}, func(s string) {
 		char.GuiSettings.CorpMining.SelType = s
-		switch s {
-		case "ORE":
-			fullList = fullListOre
-		case "ISK":
-			fullList = fullListIsk
-		}
+		typeSelectionStr = s
 		showHidePerc(s)
 		updateLists()
 		bottomRowTable.Refresh()
 	})
+	groupSelect := widget.NewSelect([]string{GROUP_SEL_CHAR, GROUP_SEL_CORP}, func(s string) {
+		if s == GROUP_SEL_CHAR {
+			ColumnHdrCharNameBtnStr = "Character Name"
+		} else {
+			ColumnHdrCharNameBtnStr = "Corp Ticker"
+		}
+		groupSelectionStr = s
+		char.GuiSettings.CorpMining.GroupSelection = s
+		rebuildMTable()
+		updateLists()
+
+		bottomRowTable.Refresh()
+	})
+
 	if char.GuiSettings.CorpMining.SelType != "" {
+		typeSelectionStr = char.GuiSettings.CorpMining.SelType
 		typeSelect.SetSelected(char.GuiSettings.CorpMining.SelType)
 	} else {
 		char.GuiSettings.CorpMining.SelType = "ISK"
+		typeSelectionStr = "ISK"
+	}
+	if char.GuiSettings.CorpMining.GroupSelection != "" {
+		groupSelectionStr = char.GuiSettings.CorpMining.GroupSelection
+		groupSelect.SetSelected(groupSelectionStr)
+	} else {
+		char.GuiSettings.CorpMining.GroupSelection = GROUP_SEL_CHAR
+		groupSelectionStr = GROUP_SEL_CHAR
+		groupSelect.SetSelected(groupSelectionStr)
 	}
 	showHidePerc(char.GuiSettings.CorpMining.SelType)
-	filtergrid := container.New(layout.NewGridLayout(5), filterCharName, filterAmount, typeSelect, percentageGrid, hintLabel)
+	filtergrid := container.New(layout.NewGridLayout(6), filterCharName, filterAmount, typeSelect, percentageGrid, groupSelect, hintLabel)
 	bottomGrid := container.New(layout.NewGridLayout(1), bottomRowTable, filtergrid)
 	topGrid2 := container.New(layout.NewGridLayout(1), topRowTable)
 	mainbox := container.NewBorder(topGrid2, bottomGrid, nil, nil, tableObj)
