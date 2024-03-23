@@ -314,14 +314,13 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 		if updateProg != nil {
 			updateProg(float64(itemCount) / float64(totalItems))
 		}
-		lastChar = char
+
 	}
-	if lastChar != nil {
-		obj.UpdateMiningMeta(lastChar, true)
-	}
+
 	for _, corp := range obj.Esi.EsiCorpList {
 		director := obj.GetCorpDirector(corp.CooperationId)
 		if director != nil {
+			lastChar = director
 			for idx, updateFunc := range obj.Up.UpdateFuncList {
 				obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
 				updateFunc(director, true)
@@ -339,6 +338,9 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 				}
 			}
 		}
+	}
+	if lastChar != nil {
+		obj.UpdateMiningMeta(lastChar, true)
 	}
 	if finishCb != nil {
 		finishCb()

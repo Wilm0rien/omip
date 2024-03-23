@@ -219,6 +219,7 @@ func (obj *miningDetailTable) SortCol(colIdx int) {
 func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyne.CanvasObject, result bool) {
 	// TODO add obervers to export table
 	// todo add filter by observer
+	// todo add alliance filter
 	maxMonth := 12
 	updateRunning := false
 
