@@ -290,6 +290,7 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	if len(obj.Esi.EsiCharList) > 0 {
 		obj.UpdateMarket(obj.Esi.EsiCharList[0], false)
 	}
+	var lastChar *EsiChar
 	for _, char := range obj.Esi.EsiCharList {
 		obj.UpdateWallet(char, false)
 		if char.AuthValid == AUTH_STATUS_INVALID {
@@ -313,6 +314,10 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 		if updateProg != nil {
 			updateProg(float64(itemCount) / float64(totalItems))
 		}
+		lastChar = char
+	}
+	if lastChar != nil {
+		obj.UpdateMiningMeta(lastChar, true)
 	}
 	for _, corp := range obj.Esi.EsiCorpList {
 		director := obj.GetCorpDirector(corp.CooperationId)

@@ -137,6 +137,15 @@ func (obj *Model) GetCorpTicker(corpID int) string {
 	return retval
 }
 
+func (obj *Model) GetCorpNames(corpID int) (ticker string, name string) {
+	info, result := obj.GetCorpInfoEntry(corpID)
+	if result == DBR_Success {
+		ticker, _ = obj.GetStringEntry(info.TickerStrRef)
+		name, _ = obj.GetStringEntry(info.CorpNameStrRef)
+	}
+	return ticker, name
+}
+
 func (obj *Model) AddCorpInfoEntry(corpInfo *DBcorpInfo) DBresult {
 	whereClause := fmt.Sprintf(`corporation_id="%d"`, corpInfo.CorpID)
 	num := obj.getNumEntries("corp_info", whereClause)

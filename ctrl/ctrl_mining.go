@@ -96,7 +96,7 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 				corpCache[elem.RecordedCorpId] = 1
 				// TODO check if corp infos are updated during update routine
 				if _, result := obj.Model.GetCorpInfoEntry(int(elem.RecordedCorpId)); result != model.DBR_Success {
-					if !obj.GetCorpInfoFromEsi(char, int(elem.RecordedCorpId)) {
+					if _, ok2 := obj.GetCorpInfoFromEsi(char, int(elem.RecordedCorpId)); !ok2 {
 						obj.AddLogEntry(fmt.Sprintf("ERROR adding corp id %d", elem.RecordedCorpId))
 					}
 				}
@@ -335,5 +335,46 @@ func (obj *Ctrl) GenerateMiningData() {
 		f2.WriteString(string(data))
 		f2.Close()
 	}
+}
 
+// UpdateMiningMeta ensure we know all the names from all entities
+func (obj *Ctrl) UpdateMiningMeta(char *EsiChar, corp bool) {
+	// TODO do this only once because it is not relevant which char does this update
+	obj.UpdateMiningChars(char)
+	obj.UpdateMiningCorps(char)
+}
+
+func (obj *Ctrl) UpdateMiningChars(char *EsiChar) {
+	charMap := obj.Model.GetMiningCharMap()
+	newNameRequests := make([]int, 0, 10)
+	for charID, _ := range charMap {
+		if !obj.Model.NameExists(charID) {
+			newNameRequests = append(newNameRequests, charID)
+		}
+	}
+	if len(newNameRequests) > 0 {
+		obj.getUniverseNames(newNameRequests, char)
+	}
+}
+func (obj *Ctrl) UpdateMiningCorps(char *EsiChar) {
+	coprpMap := obj.Model.GetMiningCorpMap()
+	allyMap := make(map[int]int)
+	for corpID, _ := range coprpMap {
+		if corpInfo2, result := obj.Model.GetCorpInfoEntry(corpID); result != model.DBR_Success {
+			if dbCorp, ok := obj.GetCorpInfoFromEsi(char, corpID); ok {
+				allyMap[dbCorp.AllianceId] = 1
+			}
+		} else {
+			allyMap[corpInfo2.AllianceId] = 1
+		}
+	}
+	obj.UpdateMiningAllies(char, allyMap)
+}
+
+func (obj *Ctrl) UpdateMiningAllies(char *EsiChar, allyMap map[int]int) {
+	for allyID, _ := range allyMap {
+		if _, result := obj.Model.GetAllyInfoEntry(allyID); result != model.DBR_Success {
+			obj.GetAllyInfoFromEsi(char, allyID)
+		}
+	}
 }

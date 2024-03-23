@@ -295,7 +295,17 @@ func (obj *Ctrl) GetRequestMock() (result ReqMockFuncT) {
 				  "url": "",
 				  "war_eligible": true
 				}`)
-
+		case "https://esi.evetech.net/v4/alliances/150097440?datasource=tranquility":
+			bodyBytes = []byte(`
+			{
+			  "creator_corporation_id": 147945511,
+			  "creator_id": 740426190,
+			  "date_founded": "2009-05-25T15:36:00Z",
+			  "executor_corporation_id": 98391152,
+			  "name": "Get Off My Lawn",
+			  "ticker": "LAWN"
+			}
+`)
 		default:
 			log.Printf("ERROR cannot find URL %s", req.URL.String())
 

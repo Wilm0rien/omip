@@ -1415,6 +1415,34 @@ func TestWallet(t *testing.T) {
 	}
 }
 
+func TestAllyInfo(t *testing.T) {
+	ctrlObj := initTestObj(t)
+	testAllyID := 150097440
+	aInfo, result := ctrlObj.Model.GetAllyInfoEntry(testAllyID)
+	if aInfo != nil {
+		t.Errorf("unexpected result")
+	}
+	if result == model.DBR_Success {
+		t.Errorf("unexpected result")
+	}
+	var ok bool
+	char := ctrlObj.Esi.EsiCharList[0]
+	aInfo, ok = ctrlObj.GetAllyInfoFromEsi(char, testAllyID)
+	if !ok {
+		t.Errorf("unexpected result")
+	}
+	if aInfo.CreatorID != 740426190 {
+		t.Errorf("unexpected result")
+	}
+	ticker, name := ctrlObj.Model.GetAllyNames(testAllyID)
+	if ticker != "LAWN" {
+		t.Errorf("unexpected result")
+	}
+	if name != "Get Off My Lawn" {
+		t.Errorf("unexpected result")
+	}
+}
+
 func TestMiningObserver(t *testing.T) {
 	ctrlObj := initTestObj(t)
 	char := ctrlObj.Esi.EsiCharList[0]

@@ -31,14 +31,14 @@ type universeNames struct {
 	Name     string `json:"name"`
 }
 
-func (obj *Ctrl) GetCorpInfoFromEsi(char *EsiChar, corpId int) (result bool) {
+func (obj *Ctrl) GetCorpInfoFromEsi(char *EsiChar, corpId int) (dbcorp *model.DBcorpInfo, result bool) {
 	url := fmt.Sprintf("https://esi.evetech.net/v5/corporations/%d?datasource=tranquility", corpId)
 	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
 	if bodyBytes != nil {
 		var cinfo corpInfo
 		err := json.Unmarshal(bodyBytes, &cinfo)
 		if err == nil {
-			dbcorp := obj.convertEsiCorpInfo2DB(&cinfo, corpId)
+			dbcorp = obj.convertEsiCorpInfo2DB(&cinfo, corpId)
 			dbResult := obj.Model.AddCorpInfoEntry(dbcorp)
 			if dbResult == model.DBR_Inserted {
 				result = true

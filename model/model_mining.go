@@ -413,3 +413,55 @@ func (obj *Model) GetCorpObservers(corpId int) (result []int) {
 	return
 
 }
+
+func (obj *Model) GetCorpObserverMap() (result map[int]int) {
+	result = make(map[int]int)
+	queryStr := fmt.Sprint(`SELECT DISTINCT ObserverID FROM mining_observers`)
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	util.CheckErr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var obsId int
+		rows.Scan(&obsId)
+		result[obsId] = 1
+	}
+	return
+
+}
+
+func (obj *Model) GetMiningCharMap() (result map[int]int) {
+	result = make(map[int]int)
+	queryStr := `SELECT DISTINCT CharID from mining_data;`
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	util.CheckErr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var charID int
+		rows.Scan(&charID)
+		result[charID] = 1
+	}
+	return
+}
+
+func (obj *Model) GetMiningCorpMap() (result map[int]int) {
+	result = make(map[int]int)
+	queryStr := `SELECT DISTINCT RecordedCorpID from mining_data;`
+	stmt, err := obj.DB.Prepare(queryStr)
+	util.CheckErr(err)
+	defer stmt.Close()
+	rows, err := stmt.Query()
+	util.CheckErr(err)
+	defer rows.Close()
+	for rows.Next() {
+		var corpId int
+		rows.Scan(&corpId)
+		result[corpId] = 1
+	}
+	return
+}

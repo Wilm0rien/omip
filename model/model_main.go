@@ -155,6 +155,7 @@ func NewModel(ldbName string, testEnable bool, debug bool) *Model {
 	obj.createContractTable()
 	obj.createOrderTable()
 	obj.createCorpMemberTable()
+	obj.createAllyInfoTable()
 	obj.createCorpInfoTable()
 	obj.createInduTable()
 	obj.createJournalTable()
