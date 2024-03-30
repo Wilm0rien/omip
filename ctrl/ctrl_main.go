@@ -320,6 +320,12 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	for _, corp := range obj.Esi.EsiCorpList {
 		director := obj.GetCorpDirector(corp.CooperationId)
 		if director != nil {
+			if director.AuthValid == AUTH_STATUS_INVALID {
+				msg := fmt.Sprintf("%s %s", corp.Name, fmt.Sprintf("skipping invalid auth %s", director.CharInfoData.CharacterName))
+				obj.AddLogEntry(msg)
+				obj.UpdateGuiStatus1(msg)
+				continue
+			}
 			lastChar = director
 			for idx, updateFunc := range obj.Up.UpdateFuncList {
 				obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
