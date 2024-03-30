@@ -249,6 +249,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 	var fullListOre *model.MonthlyTable
 	var fullListIsk *model.MonthlyTable
+	corpAllyMap := make(map[int]map[int]string)
 	tickerMap := make(map[string]int)
 	nameMapping := make(map[string]int)
 	// rebuilding is necessary when switching from char view to corp view via groupSelect
@@ -258,25 +259,42 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 		for _, elem := range origMiningData {
 			var new_monthlyOre model.DBTable
-			combinedMain := fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.MainName)
-			if elem.N.AllyTicker != "" {
-				combinedMain = fmt.Sprintf("[%s|%s] %s", elem.N.AllyTicker, elem.N.CorpTicker, elem.MainName)
-			}
-
-			combinedAlt := fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.AltName)
-			if groupSelectionStr == GROUP_SEL_CORP {
+			combinedMain := ""
+			combinedAlt := ""
+			switch groupSelectionStr {
+			case GROUP_SEL_CHAR:
+				combinedMain = fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.MainName)
+				if elem.N.AllyTicker != "" {
+					combinedMain = fmt.Sprintf("[%s|%s] %s", elem.N.AllyTicker, elem.N.CorpTicker, elem.MainName)
+				}
+				combinedAlt = fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.AltName)
+				nameMapping[combinedMain] = elem.MainID
+			case GROUP_SEL_CORP:
 				combinedMain = fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.N.CorpName)
 				if elem.N.AllyTicker != "" {
 					combinedMain = fmt.Sprintf("[%s|%s] %s", elem.N.AllyTicker, elem.N.CorpTicker, elem.N.CorpName)
 				}
 				combinedAlt = elem.MainName
 				tickerMap[combinedMain] = elem.RecordedCorporationID
+				nameMapping[combinedMain] = elem.RecordedCorporationID
+			case GRUP_SEL_ALLY:
+				combinedMain = fmt.Sprintf("[%s] %s", elem.N.AllyTicker, elem.N.AllyName)
+				if elem.N.AllyTicker == "" {
+					combinedMain = fmt.Sprintf("[%s] %s", "N/A", "no allicance")
+				}
+				combinedAlt = elem.MainName
+				tickerMap[combinedMain] = elem.N.AllyID
+				if _, ok := corpAllyMap[elem.N.AllyID]; !ok {
+					corpAllyMap[elem.N.AllyID] = make(map[int]string)
+				}
+				corpAllyMap[elem.N.AllyID][elem.N.CorpID] = combinedMain
+				nameMapping[combinedMain] = elem.N.AllyID
 			}
 
 			new_monthlyOre.MainName = combinedMain
 			new_monthlyOre.AltName = combinedAlt
 			new_monthlyOre.Time = elem.LastUpdated
-			nameMapping[combinedMain] = elem.MainID
+
 			var volume float64
 			if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
 				volume = props.GetVolume()
@@ -454,16 +472,23 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 						return
 					}
 					var list []*model.ViewMiningData
-					if groupSelectionStr == GROUP_SEL_CHAR {
+					switch groupSelectionStr {
+					case GROUP_SEL_CHAR:
 						list = obj.Ctrl.Model.GetMiningFiltered(char.CharInfoExt.CooperationId, nameMapping[charName], startTime.Unix(), endTime.Unix())
 						if len(list) == 0 {
 							list = obj.Ctrl.Model.GetMiningFilteredExt(nameMapping[charName], startTime.Unix(), endTime.Unix())
 						}
-					} else {
+					case GROUP_SEL_CORP:
 						if corpId, ok := tickerMap[charName]; ok {
 							list = obj.Ctrl.Model.GetMiningByCop(corpId, startTime.Unix(), endTime.Unix())
 						} else {
 							obj.Ctrl.Model.LogObj.Printf("ERROR %s not found in map", charName)
+						}
+					case GRUP_SEL_ALLY:
+						allyId := nameMapping[charName]
+						for corpId, _ := range corpAllyMap[allyId] {
+							corpList := obj.Ctrl.Model.GetMiningByCop(corpId, startTime.Unix(), endTime.Unix())
+							list = append(list, corpList...)
 						}
 					}
 
@@ -660,11 +685,14 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		updateLists()
 		bottomRowTable.Refresh()
 	})
-	groupSelect := widget.NewSelect([]string{GROUP_SEL_CHAR, GROUP_SEL_CORP}, func(s string) {
-		if s == GROUP_SEL_CHAR {
+	groupSelect := widget.NewSelect([]string{GROUP_SEL_CHAR, GROUP_SEL_CORP, GRUP_SEL_ALLY}, func(s string) {
+		switch s {
+		case GROUP_SEL_CHAR:
 			ColumnHdrCharNameBtnStr = "[A|C] Character Name"
-		} else {
+		case GROUP_SEL_CORP:
 			ColumnHdrCharNameBtnStr = "[A|C] Corporation"
+		case GRUP_SEL_ALLY:
+			ColumnHdrCharNameBtnStr = "[A] Alliance"
 		}
 		groupSelectionStr = s
 		char.GuiSettings.CorpMining.GroupSelection = s
