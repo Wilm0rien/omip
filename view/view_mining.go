@@ -47,6 +47,7 @@ const (
 const (
 	GROUP_SEL_CHAR = "Group By Char"
 	GROUP_SEL_CORP = "Group By Corp"
+	GRUP_SEL_ALLY  = "Group by Alliance"
 )
 
 func NewMDT(ctrl *ctrl.Ctrl) *miningDetailTable {
@@ -257,13 +258,21 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 		for _, elem := range origMiningData {
 			var new_monthlyOre model.DBTable
-			combinedMain := fmt.Sprintf("[%s] %s", elem.Ticker, elem.MainName)
-			combinedAlt := fmt.Sprintf("[%s] %s", elem.Ticker, elem.AltName)
-			if groupSelectionStr == GROUP_SEL_CORP {
-				combinedMain = elem.Ticker
-				combinedAlt = elem.MainName
+			combinedMain := fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.MainName)
+			if elem.N.AllyTicker != "" {
+				combinedMain = fmt.Sprintf("[%s|%s] %s", elem.N.AllyTicker, elem.N.CorpTicker, elem.MainName)
 			}
-			tickerMap[elem.Ticker] = elem.RecordedCorporationID
+
+			combinedAlt := fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.AltName)
+			if groupSelectionStr == GROUP_SEL_CORP {
+				combinedMain = fmt.Sprintf("[%s] %s", elem.N.CorpTicker, elem.N.CorpName)
+				if elem.N.AllyTicker != "" {
+					combinedMain = fmt.Sprintf("[%s|%s] %s", elem.N.AllyTicker, elem.N.CorpTicker, elem.N.CorpName)
+				}
+				combinedAlt = elem.MainName
+				tickerMap[combinedMain] = elem.RecordedCorporationID
+			}
+
 			new_monthlyOre.MainName = combinedMain
 			new_monthlyOre.AltName = combinedAlt
 			new_monthlyOre.Time = elem.LastUpdated
@@ -653,9 +662,9 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	})
 	groupSelect := widget.NewSelect([]string{GROUP_SEL_CHAR, GROUP_SEL_CORP}, func(s string) {
 		if s == GROUP_SEL_CHAR {
-			ColumnHdrCharNameBtnStr = "Character Name"
+			ColumnHdrCharNameBtnStr = "[A|C] Character Name"
 		} else {
-			ColumnHdrCharNameBtnStr = "Corp Ticker"
+			ColumnHdrCharNameBtnStr = "[A|C] Corporation"
 		}
 		groupSelectionStr = s
 		char.GuiSettings.CorpMining.GroupSelection = s

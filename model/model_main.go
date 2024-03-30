@@ -51,6 +51,7 @@ type Model struct {
 	ItemAvgPrice    map[int]float64
 	ItemMats        SdeTypeMatsList
 	DebugFlag       bool
+	corpNameMap     map[int]*DBCorpNames
 }
 
 const (
@@ -78,6 +79,7 @@ const (
 
 func NewModel(ldbName string, testEnable bool, debug bool) *Model {
 	var obj Model
+	obj.corpNameMap = make(map[int]*DBCorpNames)
 	lLogFileName := LogFileName
 	if testEnable {
 		lLogFileName = LogFileNameTest

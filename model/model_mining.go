@@ -26,7 +26,7 @@ type ViewMiningData struct {
 	MainID   int
 	MainName string
 	AltName  string
-	Ticker   string
+	N        DBCorpNames
 	DBMiningData
 }
 
@@ -190,7 +190,6 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 	rows, err := stmt.Query(corpID)
 	util.CheckErr(err)
 	defer rows.Close()
-	tickerMap := make(map[int]string)
 	for rows.Next() {
 		var mininItem ViewMiningData
 		rows.Scan(
@@ -205,13 +204,7 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 			&mininItem.AltName,
 			&mininItem.MainName,
 		)
-		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
-			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
-			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
-		} else {
-			mininItem.Ticker = tickerStr
-		}
-
+		mininItem.N = obj.GetCachedCorpNames(mininItem.RecordedCorporationID)
 		list = append(list, &mininItem)
 	}
 	return
@@ -231,7 +224,6 @@ func (obj *Model) GetExtMiningData(corpID int, obsId int) (list []*ViewMiningDat
 	rows, err := stmt.Query(corpID, obsId)
 	util.CheckErr(err)
 	defer rows.Close()
-	tickerMap := make(map[int]string)
 	for rows.Next() {
 		var mininItem ViewMiningData
 		rows.Scan(
@@ -246,14 +238,7 @@ func (obj *Model) GetExtMiningData(corpID int, obsId int) (list []*ViewMiningDat
 		mininItem.MainID = mininItem.CharacterID
 		mininItem.MainName = obj.GetNameByID(mininItem.CharacterID)
 		mininItem.AltName = mininItem.MainName
-
-		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
-			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
-			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
-		} else {
-			mininItem.Ticker = tickerStr
-		}
-
+		mininItem.N = obj.GetCachedCorpNames(mininItem.RecordedCorporationID)
 		list = append(list, &mininItem)
 	}
 	return
@@ -274,7 +259,6 @@ func (obj *Model) GetMiningFilteredExt(mainId int, startTS int64, endTS int64) (
 	rows, err := stmt.Query(mainId, startTS, endTS)
 	util.CheckErr(err)
 	defer rows.Close()
-	tickerMap := make(map[int]string)
 	for rows.Next() {
 		var mininItem ViewMiningData
 		rows.Scan(
@@ -289,12 +273,7 @@ func (obj *Model) GetMiningFilteredExt(mainId int, startTS int64, endTS int64) (
 		mininItem.MainID = mininItem.CharacterID
 		mininItem.MainName = obj.GetNameByID(mininItem.CharacterID)
 		mininItem.AltName = mininItem.MainName
-		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
-			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
-			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
-		} else {
-			mininItem.Ticker = tickerStr
-		}
+		mininItem.N = obj.GetCachedCorpNames(mininItem.RecordedCorporationID)
 		list = append(list, &mininItem)
 	}
 	return
@@ -327,7 +306,6 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 	rows, err := stmt.Query(corpId, mainId, startTS, endTS)
 	util.CheckErr(err)
 	defer rows.Close()
-	tickerMap := make(map[int]string)
 	for rows.Next() {
 		var mininItem ViewMiningData
 		rows.Scan(
@@ -342,12 +320,7 @@ SELECT ObserverID, CharID,corp_members.main_id as MainID,LastUpdated, Quantity,
 			&mininItem.AltName,
 			&mininItem.MainName,
 		)
-		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
-			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
-			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
-		} else {
-			mininItem.Ticker = tickerStr
-		}
+		mininItem.N = obj.GetCachedCorpNames(mininItem.RecordedCorporationID)
 		list = append(list, &mininItem)
 	}
 	return
@@ -368,7 +341,6 @@ func (obj *Model) GetMiningByCop(corpId int, startTS int64, endTS int64) (list [
 	rows, err := stmt.Query(corpId, startTS, endTS)
 	util.CheckErr(err)
 	defer rows.Close()
-	tickerMap := make(map[int]string)
 	for rows.Next() {
 		var mininItem ViewMiningData
 		rows.Scan(
@@ -383,12 +355,7 @@ func (obj *Model) GetMiningByCop(corpId int, startTS int64, endTS int64) (list [
 		mininItem.MainID = mininItem.CharacterID
 		mininItem.MainName = obj.GetNameByID(mininItem.CharacterID)
 		mininItem.AltName = mininItem.MainName
-		if tickerStr, ok := tickerMap[mininItem.RecordedCorporationID]; !ok {
-			mininItem.Ticker = obj.GetCorpTicker(mininItem.RecordedCorporationID)
-			tickerMap[mininItem.RecordedCorporationID] = mininItem.Ticker
-		} else {
-			mininItem.Ticker = tickerStr
-		}
+		mininItem.N = obj.GetCachedCorpNames(mininItem.RecordedCorporationID)
 		list = append(list, &mininItem)
 	}
 	return
@@ -462,6 +429,18 @@ func (obj *Model) GetMiningCorpMap() (result map[int]int) {
 		var corpId int
 		rows.Scan(&corpId)
 		result[corpId] = 1
+	}
+	return
+}
+
+func (obj *Model) GetCachedCorpNames(corpID int) (result DBCorpNames) {
+	if _, ok := obj.corpNameMap[corpID]; !ok {
+		if corpNames := obj.GetCorpNames(corpID); corpNames != nil {
+			obj.corpNameMap[corpID] = corpNames
+		}
+	}
+	if names, ok := obj.corpNameMap[corpID]; ok {
+		result = *names
 	}
 	return
 }

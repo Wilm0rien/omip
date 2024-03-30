@@ -360,13 +360,12 @@ func (obj *Ctrl) UpdateMiningCorps(char *EsiChar) {
 	coprpMap := obj.Model.GetMiningCorpMap()
 	allyMap := make(map[int]int)
 	for corpID, _ := range coprpMap {
-		if corpInfo2, result := obj.Model.GetCorpInfoEntry(corpID); result != model.DBR_Success {
-			if dbCorp, ok := obj.GetCorpInfoFromEsi(char, corpID); ok {
+		if dbCorp, ok := obj.GetCorpInfoFromEsi(char, corpID); ok {
+			if dbCorp.AllianceId != 0 {
 				allyMap[dbCorp.AllianceId] = 1
 			}
-		} else {
-			allyMap[corpInfo2.AllianceId] = 1
 		}
+
 	}
 	obj.UpdateMiningAllies(char, allyMap)
 }

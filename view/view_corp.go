@@ -173,6 +173,9 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	miningBt := widget.NewButton("Mining", func() {
 		obj.Ctrl.UpdateCorpMiningObs(director, true)
 	})
+	metaButton := widget.NewButton("update Mining Meta", func() {
+		obj.Ctrl.UpdateMiningMeta(director, false)
+	})
 	/** TODO remove paps
 	papBtn := widget.NewButton("Paps", func() {
 		if aDash, ok := obj.Ctrl.ADash[director.CharInfoExt.CooperationId]; ok {
@@ -192,7 +195,7 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	box := container.NewVBox(
 		contractBtn, contractItemsBtn, indudstryBtn, journalBtn, orderBtn, transactionsBtn,
 		killmailsBtn, killmailsBtnLastMotn, structureBtn, walletBtn, membersBtn, crashbutton,
-		miningBt)
+		miningBt, metaButton)
 	/** TODO remove paps
 	if IsImperium(corp.AllianceId) {
 		box.Objects = append(box.Objects, papBtn)

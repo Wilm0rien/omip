@@ -40,7 +40,7 @@ func (obj *Ctrl) GetCorpInfoFromEsi(char *EsiChar, corpId int) (dbcorp *model.DB
 		if err == nil {
 			dbcorp = obj.convertEsiCorpInfo2DB(&cinfo, corpId)
 			dbResult := obj.Model.AddCorpInfoEntry(dbcorp)
-			if dbResult == model.DBR_Inserted {
+			if dbResult == model.DBR_Inserted || dbResult == model.DBR_Updated {
 				result = true
 			}
 		}
