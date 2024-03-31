@@ -22,6 +22,7 @@ import (
 
 type miningDetail struct {
 	altName   string
+	obsName   string
 	dateStr   string
 	oreType   string
 	oreAmount int
@@ -37,11 +38,12 @@ type miningDetailTable struct {
 
 const (
 	MDTCol0AltName = iota
-	MDTCol1DateString
-	MDTCol2OreTypeStr
-	MDTCol3OreAmount
-	MDTCol4OreVolume
-	MDTCol5IskValue
+	MDTCol1ObserverName
+	MDTCol2DateString
+	MDTCol3OreTypeStr
+	MDTCol4OreAmount
+	MDTCol5OreVolume
+	MDTCol6IskValue
 )
 
 const (
@@ -57,6 +59,7 @@ func NewMDT(ctrl *ctrl.Ctrl) *miningDetailTable {
 	mDT.filteredList = make([]*miningDetail, 0, 10)
 	mDT.header = make([]string, 0, 10)
 	mDT.header = append(mDT.header, "alt name")
+	mDT.header = append(mDT.header, "location")
 	mDT.header = append(mDT.header, "date")
 	mDT.header = append(mDT.header, "ore type")
 	mDT.header = append(mDT.header, "ore amount")
@@ -65,10 +68,11 @@ func NewMDT(ctrl *ctrl.Ctrl) *miningDetailTable {
 	mDT.colWidth = make([]float32, 0, 10)
 	mDT.colWidth = append(mDT.colWidth, 150)
 	mDT.colWidth = append(mDT.colWidth, 150)
-	mDT.colWidth = append(mDT.colWidth, 150)
-	mDT.colWidth = append(mDT.colWidth, 150)
-	mDT.colWidth = append(mDT.colWidth, 150)
-	mDT.colWidth = append(mDT.colWidth, 150)
+	mDT.colWidth = append(mDT.colWidth, 100)
+	mDT.colWidth = append(mDT.colWidth, 100)
+	mDT.colWidth = append(mDT.colWidth, 100)
+	mDT.colWidth = append(mDT.colWidth, 100)
+	mDT.colWidth = append(mDT.colWidth, 100)
 	mDT.filter = make([]string, 0, 10)
 	for i := 0; i < len(mDT.header); i++ {
 		mDT.filter = append(mDT.filter, "")
@@ -88,21 +92,22 @@ func (obj *miningDetailTable) GetSumCellStr(colIdx int) (string, color.NRGBA) {
 	txt := ""
 	switch colIdx {
 	case MDTCol0AltName:
-	case MDTCol1DateString:
-	case MDTCol2OreTypeStr:
-	case MDTCol3OreAmount:
+	case MDTCol1ObserverName:
+	case MDTCol2DateString:
+	case MDTCol3OreTypeStr:
+	case MDTCol4OreAmount:
 		var sum float64
 		for _, elem := range obj.filteredList {
 			sum += float64(elem.oreAmount)
 		}
 		txt = util.HumanizeNumber(sum)
-	case MDTCol4OreVolume:
+	case MDTCol5OreVolume:
 		var sum float64
 		for _, elem := range obj.filteredList {
 			sum += float64(elem.oreVolume)
 		}
 		txt = util.HumanizeNumber(sum)
-	case MDTCol5IskValue:
+	case MDTCol6IskValue:
 		var sum float64
 		for _, elem := range obj.filteredList {
 			sum += elem.iskValue
@@ -130,23 +135,28 @@ func (obj *miningDetailTable) getCellStrFull(rowIdx int, colIdx int, inputList [
 
 				//retval = "MDTCol0AltName " + fmt.Sprintf("%d %d", rowIdx, colIdx)
 				retval = listElem.altName
-			case MDTCol1DateString:
+			case MDTCol1ObserverName:
+				//retval = listElem.altName
+
+				//retval = "MDTCol0AltName " + fmt.Sprintf("%d %d", rowIdx, colIdx)
+				retval = listElem.obsName
+			case MDTCol2DateString:
 
 				//retval = listElem.dateStr
 
-				//retval = "MDTCol1DateString"
+				//retval = "MDTCol2DateString"
 				retval = listElem.dateStr
-			case MDTCol2OreTypeStr:
+			case MDTCol3OreTypeStr:
 
 				//retval = listElem.oreType
 				retval = listElem.oreType
-			case MDTCol3OreAmount:
+			case MDTCol4OreAmount:
 				//retval = util.HumanizeNumber((float64)(listElem.oreAmount))
 				retval = util.HumanizeNumber(float64(listElem.oreAmount))
-			case MDTCol4OreVolume:
+			case MDTCol5OreVolume:
 				//retval = util.HumanizeNumber((float64)(listElem.oreVolume))
 				retval = util.HumanizeNumber(float64(listElem.oreVolume))
-			case MDTCol5IskValue:
+			case MDTCol6IskValue:
 				//retval = util.HumanizeNumber(listElem.iskValue)
 				retval = util.HumanizeNumber(listElem.iskValue)
 
@@ -163,11 +173,27 @@ func (obj *miningDetailTable) SelectedFunc() func(id widget.TableCellID) {
 }
 func (obj *miningDetailTable) UpdateLists() {
 	obj.filteredList = obj.filteredList[:0]
-	for rowIdx, _ := range obj.fulllist {
+
+	for rowIdx, elem := range obj.fulllist {
 		filterOK := true
 		for colIdx, _ := range obj.header {
+			if colIdx == MDTCol0AltName {
+				if float32(len(elem.altName)*9) > obj.colWidth[MDTCol0AltName] {
+					obj.colWidth[MDTCol0AltName] = float32(len(elem.altName) * 9)
+				}
+			}
+			if colIdx == MDTCol1ObserverName {
+				if float32(len(elem.obsName)*9) > obj.colWidth[MDTCol1ObserverName] {
+					obj.colWidth[MDTCol1ObserverName] = float32(len(elem.obsName) * 9)
+				}
+			}
+			if colIdx == MDTCol3OreTypeStr {
+				if float32(len(elem.oreType)*9) > obj.colWidth[MDTCol3OreTypeStr] {
+					obj.colWidth[MDTCol3OreTypeStr] = float32(len(elem.oreType) * 9)
+				}
+			}
 			currentFilter := obj.filter[colIdx]
-			if colIdx == MDTCol5IskValue {
+			if colIdx == MDTCol6IskValue {
 				if s, err := strconv.ParseFloat(currentFilter, 64); err == nil {
 					if (obj.fulllist[rowIdx].iskValue / 1000000) < s {
 						filterOK = false
@@ -199,11 +225,11 @@ func (obj *miningDetailTable) SortCol(colIdx int) {
 		b := obj.getCellStrFull(j, colIdx, obj.fulllist)
 		if j <= len(obj.fulllist) {
 			switch colIdx {
-			case MDTCol3OreAmount:
+			case MDTCol4OreAmount:
 				retval = obj.fulllist[i].oreAmount >= obj.fulllist[j].oreAmount
-			case MDTCol4OreVolume:
+			case MDTCol5OreVolume:
 				retval = obj.fulllist[i].oreVolume >= obj.fulllist[j].oreVolume
-			case MDTCol5IskValue:
+			case MDTCol6IskValue:
 				retval = obj.fulllist[i].iskValue >= obj.fulllist[j].iskValue
 			default:
 				retval = strings.ToUpper(a) >= strings.ToUpper(b)
@@ -504,6 +530,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 						for _, elem := range list {
 							var newElem miningDetail
 							newElem.altName = elem.AltName
+							newElem.obsName = obj.Ctrl.GetStructureNameCached(elem.ObserverID, obj.Ctrl.Esi.EsiCharList[0])
 							newElem.dateStr = util.ConvertUnixTimeToDateStr(elem.LastUpdated)
 							newElem.oreType = obj.Ctrl.Model.GetTypeString(elem.TypeID)
 							newElem.oreAmount = elem.Quantity
@@ -528,7 +555,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 						if len(miningDT.fulllist) < 20 {
 							height = float32(50*len(miningDT.fulllist)) + 100
 						}
-						w.Resize(fyne.NewSize(1024, height))
+						w.Resize(fyne.NewSize(1200, height))
 						wList = append(wList, &WindowList{windowTitle, w})
 						w.Show()
 						w.SetOnClosed(func() {

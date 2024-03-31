@@ -45,6 +45,13 @@ const miningData_v1 = `
 						"recorded_corporation_id": 98179071,
 						"type_id": 17449,
 						"quantity": 6888
+					  },
+					  {
+						"last_updated": "2024-03-10",
+						"character_id": 2121966805,
+						"recorded_corporation_id": 98760370,
+						"type_id": 20,
+						"quantity": 1500
 					  }
 					]
 					`
@@ -111,6 +118,13 @@ const miningData_v2 = `
 						"character_id": 2121966805,
 						"recorded_corporation_id": 98760370,
 						"type_id": 20,
+						"quantity": 1000
+					  },
+					  {
+						"last_updated": "2024-03-10",
+						"character_id": 2121966805,
+						"recorded_corporation_id": 98760370,
+						"type_id": 46681,
 						"quantity": 1000
 					  }
 					]

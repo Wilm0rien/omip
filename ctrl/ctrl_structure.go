@@ -118,6 +118,10 @@ func (obj *Ctrl) GetStructureNameCached(structureID int64, char *EsiChar) (name 
 	if val, ok := obj.structCache[structureID]; ok {
 		name = val
 	} else {
+		if char == nil {
+			obj.AddLogEntry(fmt.Sprintf("ERROR processStructInfo char"))
+			return
+		}
 		structNameItem := obj.Model.GetStructureName(structureID)
 		if structNameItem == nil {
 			if structureID < 100000000 {
