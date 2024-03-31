@@ -357,6 +357,7 @@ func (obj *Ctrl) UpdateMiningChars(char *EsiChar) {
 	}
 }
 func (obj *Ctrl) UpdateMiningCorps(char *EsiChar) {
+	obj.Model.DeleteCorpCache()
 	coprpMap := obj.Model.GetMiningCorpMap()
 	allyMap := make(map[int]int)
 	for corpID, _ := range coprpMap {

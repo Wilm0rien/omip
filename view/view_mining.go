@@ -334,6 +334,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	}
 
 	filteredCharList := make([]string, 0, 10)
+
 	fullList := fullListOre
 	filterReverse := false
 	updateLists := func() {
@@ -343,7 +344,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		case "ISK":
 			fullList = fullListIsk
 		}
-		filteredCharList = make([]string, 0, 10)
+		filteredCharList = filteredCharList[:0]
 		filteredList.MaxAllTime = 0
 		filteredList.SumInMonth = make(map[string]float64)
 		filteredList.MaxInMonth = make(map[string]float64)
@@ -411,10 +412,15 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		} else {
 			filterReverse = true
 		}
+		if len(filteredCharList) == 0 {
+			filteredCharList = append(filteredCharList, "N/A")
+		}
 		tableObj.Refresh()
 	}
 	tableObj = widget.NewTable(
-		func() (int, int) { return len(filteredCharList), maxMonth + 1 },
+		func() (int, int) {
+			return len(filteredCharList), maxMonth + 1
+		},
 		func() fyne.CanvasObject {
 			newText := canvas.NewText("", color.NRGBA{0, 0x80, 0, 0xff})
 			newText.Alignment = fyne.TextAlignCenter
@@ -652,9 +658,14 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 	percentageEntry := widget.NewEntry()
 	percentageEntry.SetPlaceHolder("Percentage")
-	percentageBtn := widget.NewButton("Update", func() {
+	percentageBtn := widget.NewButton("Update %", func() {
+		if percentageEntry.Text == "" {
+			d := dialog.NewError(errors.New(fmt.Sprintf("percentage must be between 0..100 %s", filterAmount.Text)), obj.WindowPtr)
+			d.Show()
+			return
+		}
 		if s, err := strconv.ParseFloat(percentageEntry.Text, 64); err == nil {
-			if s > 0 && s <= 100 {
+			if s >= 0 && s <= 100 {
 				char.GuiSettings.CorpMining.Percentage = s
 				updateLists()
 			} else {

@@ -433,6 +433,10 @@ func (obj *Model) GetMiningCorpMap() (result map[int]int) {
 	return
 }
 
+func (obj *Model) DeleteCorpCache() {
+	obj.corpNameMap = make(map[int]*DBCorpNames)
+}
+
 func (obj *Model) GetCachedCorpNames(corpID int) (result DBCorpNames) {
 	if _, ok := obj.corpNameMap[corpID]; !ok {
 		if corpNames := obj.GetCorpNames(corpID); corpNames != nil {
