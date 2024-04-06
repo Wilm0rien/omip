@@ -320,7 +320,7 @@ func (obj *Ctrl) GetRequestMock() (result ReqMockFuncT) {
 			]
 			`)
 		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000001/?datasource=tranquility&page=1":
-			bodyBytes = []byte(miningData_v1)
+			bodyBytes = []byte(miningData_v3)
 		case "https://esi.evetech.net/v1/corporation/98627127/mining/observers/1000000000002/?datasource=tranquility&page=1":
 			bodyBytes = []byte(miningData_v2)
 		case "https://esi.evetech.net/v5/corporations/98179071?datasource=tranquility":

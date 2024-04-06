@@ -87,7 +87,15 @@ func (obj *Ctrl) getMiningData(char *EsiChar, observerID int64) {
 			break
 		}
 		obj.AddLogEntry(fmt.Sprintf("reading mining getMiningData %s successful found %d entries", strucName, len(miningDataEntry)))
-		for _, elem := range miningDataEntry {
+
+		endIdx := len(miningDataEntry)
+		lastTs := time.Now()
+		for idx, elem := range miningDataEntry {
+			if time.Since(lastTs).Milliseconds() > 500 {
+				obj.GuiStatusCB("mining update", 1)
+				obj.GuiStatusCB(fmt.Sprintf("%3.2f%%", float32(idx)/float32(endIdx)*100), 2)
+				lastTs = time.Now()
+			}
 			dbMiningData := obj.convertEsiMiningData2DB(elem, observerID, char.CharInfoExt.CooperationId)
 			db1R := obj.Model.AddMiningDataEntry(dbMiningData)
 			util.Assert(db1R == model.DBR_Inserted || db1R == model.DBR_Updated)
@@ -291,7 +299,7 @@ func (obj *Ctrl) GenerateMiningData() {
 
 	list := make([]*MiningData, 0, 100)
 	for month := int32(1); month <= 12; month++ {
-		for day := int32(1); day <= 30; day++ {
+		for day := int32(1); day <= 28; day++ {
 			num := 10 + rand.Intn(100)
 			filterMap := make(map[int]map[int]*MiningData)
 

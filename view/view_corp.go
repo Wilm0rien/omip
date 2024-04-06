@@ -170,8 +170,18 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	walletBtn := widget.NewButton("Wallet", func() {
 		obj.Ctrl.UpdateWallet(director, true)
 	})
+	running := false
 	miningBt := widget.NewButton("Mining", func() {
-		obj.Ctrl.UpdateCorpMiningObs(director, true)
+		if running == false {
+			running = true
+			go func() {
+				obj.Ctrl.UpdateCorpMiningObs(director, true)
+				running = false
+			}()
+		} else {
+			obj.Ctrl.GuiStatusCB("still running", 1)
+		}
+
 	})
 	metaButton := widget.NewButton("update Mining Meta", func() {
 		obj.Ctrl.UpdateMiningMeta(director, false)
