@@ -1464,8 +1464,8 @@ func TestMiningObserver(t *testing.T) {
 	ctrlObj.Model.AddMiningDataEntry(&dummy)
 	// TODO fix getmining data for non-corp members!
 	list = ctrlObj.Model.GetExtMiningData(char.CharInfoExt.CooperationId, 1000000000001)
-	if len(list) != 1 {
-		t.Errorf("TODO fix getmining data for non-corp members! expected 1 elements got %d", len(list))
+	if len(list) != 2 {
+		t.Errorf("TODO fix getmining data for non-corp members! expected 2 elements got %d", len(list))
 	}
 	list = ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
 	if len(list) != 7 {

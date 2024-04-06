@@ -474,7 +474,7 @@ func (obj *OmipGui) notifyScreen() fyne.CanvasObject {
 		obj.Ctrl.AddLogEntry(fmt.Sprintf("ERROR could not read update url %s", updateUrl))
 	} else {
 		if TagName != obj.Version {
-			//obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", TagName))
+			obj.Ctrl.AddLogEntry(fmt.Sprintf("NEW VERSION available %s. Update via Menu Bar Help --> Check for Update", TagName))
 		}
 	}
 	return container.NewBorder(nil, obj.Progress, nil, nil, scroll)

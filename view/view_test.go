@@ -11,7 +11,7 @@ import (
 )
 
 func TestGui(t *testing.T) {
-	modelObj := model.NewModel(model.DbNameCtrlTest, false)
+	modelObj := model.NewModel(model.DbNameCtrlTest, false, false)
 	ctrlObj := ctrl.NewCtrl(modelObj)
 	ctrlObj.Load(ctrl.TstCfgJson, true)
 	app := test.NewApp()
