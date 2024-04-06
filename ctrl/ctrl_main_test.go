@@ -18,45 +18,14 @@ func TestInit(t *testing.T) {
 	// sub  : CHARACTER:EVE:2115636466
 	// name : Ion of Chios
 	// see GetCharInfo() function for jwt extraction of token
-	dummyToken := `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJvbWlwIHRlc3QgdG9rZW4iLCJpYXQiOjE2MzU3NTE2NjMsImV4cCI6MTY2NzI4NzY2MywiYXVkIjoid3d3LmV2ZW9ubGluZS5jb20iLCJzdWIiOiJDSEFSQUNURVI6RVZFOjIxMTU2MzY0NjYiLCJuYW1lIjoiSW9uIG9mIENoaW9zIiwiRW1haWwiOiJqcm9ja2V0QGV4YW1wbGUuY29tIn0.kbAkeoDeGh3Hh5mVtKJNl-vJScbbkOOlTYTs1mR91ZY`
 
 	CtrlTestEnable = true
 	model.DeleteDb(model.DbNameCtrlTest)
-	modelObj := model.NewModel(model.DbNameCtrlTest, false)
+	modelObj := model.NewModel(model.DbNameCtrlTest, false, false)
 	ctrlObj := NewCtrl(modelObj)
 	waitForAuth := make(chan string)
-	expiresOn := util.UnixTS2DateTimeStr(time.Now().Add(1199 * time.Second).Unix())
 
-	response := func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
-		resp = &http.Response{
-			StatusCode: http.StatusOK,
-		}
-		switch req.URL.String() {
-		case "https://login.eveonline.com/v2/oauth/token":
-			bodyBytes = []byte("{\"access_token\":\"" + dummyToken + "\",\"expires_in\":1199,\"token_type\":\"Bearer\",\"refresh_token\":\"refresh_token_dummytoken\"}")
-		case "https://login.eveonline.com/oauth/verify":
-			resultString := fmt.Sprintf("{\"CharacterID\":2115636466,\"CharacterName\":\"Ion of Chios\",\"ExpiresOn\":\"%s\",\"Scopes\":\"publicData esi-wallet.read_character_wallet.v1 esi-wallet.read_corporation_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-corporations.track_members.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-corporations.read_starbases.v1 esi-industry.read_corporation_jobs.v1\",\"TokenType\":\"Character\",\"CharacterOwnerHash\":\"dummyhash=\",\"IntellectualProperty\":\"EVE\"}",
-				expiresOn)
-			bodyBytes = []byte(resultString)
-		case "https://esi.evetech.net/v5/characters/2115636466":
-			bodyBytes = []byte("{\"ancestry_id\":9,\"birthday\":\"2019-08-28T18:48:02Z\",\"bloodline_id\":2,\"corporation_id\":98627127,\"description\":\"\",\"gender\":\"male\",\"name\":\"Ion of Chios\",\"race_id\":1,\"security_status\":0.0}")
-		case "https://esi.evetech.net/v2/corporations/98627127/roles/?datasource=tranquility":
-			bodyBytes = []byte("[{\"character_id\":95067057,\"grantable_roles\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"grantable_roles_at_base\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"grantable_roles_at_hq\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"grantable_roles_at_other\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"roles\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"roles_at_base\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"roles_at_hq\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"],\"roles_at_other\":[\"Director\",\"Personnel_Manager\",\"Accountant\",\"Security_Officer\",\"Factory_Manager\",\"Station_Manager\",\"Auditor\",\"Hangar_Take_1\",\"Hangar_Take_2\",\"Hangar_Take_3\",\"Hangar_Take_4\",\"Hangar_Take_5\",\"Hangar_Take_6\",\"Hangar_Take_7\",\"Hangar_Query_1\",\"Hangar_Query_2\",\"Hangar_Query_3\",\"Hangar_Query_4\",\"Hangar_Query_5\",\"Hangar_Query_6\",\"Hangar_Query_7\",\"Account_Take_1\",\"Account_Take_2\",\"Account_Take_3\",\"Account_Take_4\",\"Account_Take_5\",\"Account_Take_6\",\"Account_Take_7\",\"Diplomat\",\"Config_Equipment\",\"Container_Take_1\",\"Container_Take_2\",\"Container_Take_3\",\"Container_Take_4\",\"Container_Take_5\",\"Container_Take_6\",\"Container_Take_7\",\"Rent_Office\",\"Rent_Factory_Facility\",\"Rent_Research_Facility\",\"Junior_Accountant\",\"Config_Starbase_Equipment\",\"Trader\",\"Communications_Officer\",\"Contract_Manager\",\"Starbase_Defense_Operator\",\"Starbase_Fuel_Technician\",\"Fitting_Manager\"]},{\"character_id\":95281762,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2113199519,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2114367476,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2114908444,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115417359,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115448095,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115636466,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[\"Director\"],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115692519,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115692575,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]},{\"character_id\":2115714045,\"grantable_roles\":[],\"grantable_roles_at_base\":[],\"grantable_roles_at_hq\":[],\"grantable_roles_at_other\":[],\"roles\":[],\"roles_at_base\":[],\"roles_at_hq\":[],\"roles_at_other\":[]}]")
-		case "https://esi.evetech.net/v5/corporations/98627127?datasource=tranquility":
-			bodyBytes = []byte("{\"ceo_id\":95067057,\"creator_id\":2115636466,\"date_founded\":\"2020-01-09T17:27:50Z\",\"description\":\"Enter a description of your corporation here.\",\"home_station_id\":60011386,\"member_count\":11,\"name\":\"Feynman Electrodynamics\",\"shares\":1000,\"tax_rate\":0.0,\"ticker\":\"FYDYN\",\"url\":\"http:\\/\\/\"}")
-		case "https://esi.evetech.net/v4/corporations/98627127/members/?datasource=tranquility":
-			bodyBytes = []byte("[95281762,2115692519,2115417359,95067057,2115636466,2114367476,2113199519,2115448095,2114908444,2115714045,2115692575]")
-		case "https://esi.evetech.net/v3/universe/names/":
-			bodyBytes = []byte("[{\"category\":\"character\",\"id\":95281762,\"name\":\"Zuberi Mwanajuma\"},{\"category\":\"character\",\"id\":2115692519,\"name\":\"Rob Barrington\"},{\"category\":\"character\",\"id\":2115417359,\"name\":\"Koriyi Chan\"},{\"category\":\"character\",\"id\":95067057,\"name\":\"Gwen Facero\"},{\"category\":\"character\",\"id\":2115636466,\"name\":\"Ion of Chios\"},{\"category\":\"character\",\"id\":2114367476,\"name\":\"Koriyo -Skill1 Skill\"},{\"category\":\"character\",\"id\":2113199519,\"name\":\"azullunes\"},{\"category\":\"character\",\"id\":2115448095,\"name\":\"Koriyo -Skill2 Skill\"},{\"category\":\"character\",\"id\":2114908444,\"name\":\"Gudrun Yassavi\"},{\"category\":\"character\",\"id\":2115714045,\"name\":\"Luke Lovell\"},{\"category\":\"character\",\"id\":2115692575,\"name\":\"Jill Kenton\"}]")
-		case "https://esi.evetech.net/v1/characters/2115636466/killmails/recent/":
-			bodyBytes = []byte("[]")
-		case "https://esi.evetech.net/v1/corporations/98627127/killmails/recent/":
-			bodyBytes = []byte("[]")
-
-		}
-
-		return bodyBytes, err, resp
-	}
+	response := ctrlObj.GetRequestMock()
 	HttpRequestMock = response
 
 	ctrlObj.AuthCb = func(newChar *EsiChar) {
@@ -111,6 +80,7 @@ func TestInit(t *testing.T) {
 	char.UpdateFlags.PapLinks = true
 	char.UpdateFlags.Killmails = true
 	char.UpdateFlags.Structures = true
+	char.UpdateFlags.Mining = true
 	err := ctrlObj.Save(TstCfgJson, true)
 	if err != nil {
 		t.Fatalf("Error writing %s", TstCfgJson)
@@ -127,7 +97,7 @@ func TestInit(t *testing.T) {
 }
 
 func initTestObj(t *testing.T) *Ctrl {
-	modelObj := model.NewModel(model.DbNameCtrlTest, false)
+	modelObj := model.NewModel(model.DbNameCtrlTest, false, false)
 	ctrlObj := NewCtrl(modelObj)
 	err := ctrlObj.Load(TstCfgJson, true)
 	if err != nil {
@@ -981,7 +951,7 @@ func TestKillmails(t *testing.T) {
 	year, month, _ := time.Now().AddDate(0, 0, -2).Date()
 	ymStr := fmt.Sprintf("%02d-%02d", year-2000, month)
 	charName := "Koriyi Chan"
-	expValue := 14982775.65
+	expValue := 13259392.31
 	if _, ok := lossTable.ValCharPerMon[charName]; ok {
 		if value, ok2 := lossTable.ValCharPerMon[charName][ymStr]; ok2 {
 			if fmt.Sprintf("%3.2f", expValue) != fmt.Sprintf("%3.2f", value) {
@@ -1443,4 +1413,133 @@ func TestWallet(t *testing.T) {
 	if !ctrlObj.Model.WalletEntryExists(char.CharInfoData.CharacterID, 0, 0) {
 		t.Errorf("could not find char wallet")
 	}
+}
+
+func TestAllyInfo(t *testing.T) {
+	ctrlObj := initTestObj(t)
+	testAllyID := 150097440
+	aInfo, result := ctrlObj.Model.GetAllyInfoEntry(testAllyID)
+	if aInfo != nil {
+		t.Errorf("unexpected result")
+	}
+	if result == model.DBR_Success {
+		t.Errorf("unexpected result")
+	}
+	var ok bool
+	char := ctrlObj.Esi.EsiCharList[0]
+	aInfo, ok = ctrlObj.GetAllyInfoFromEsi(char, testAllyID)
+	if !ok {
+		t.Errorf("unexpected result")
+	}
+	if aInfo.CreatorID != 740426190 {
+		t.Errorf("unexpected result")
+	}
+	ticker, name := ctrlObj.Model.GetAllyNames(testAllyID)
+	if ticker != "LAWN" {
+		t.Errorf("unexpected result")
+	}
+	if name != "Get Off My Lawn" {
+		t.Errorf("unexpected result")
+	}
+}
+
+func TestMiningObserver(t *testing.T) {
+	ctrlObj := initTestObj(t)
+	char := ctrlObj.Esi.EsiCharList[0]
+	list := ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
+	if len(list) != 0 {
+		t.Error("expected empty database")
+	}
+	ctrlObj.UpdateCorpMiningObs(char, true)
+	baseName1 := ctrlObj.GetStructureNameCached(1000000000001, char)
+	if baseName1 != "PhantomSystem - PhantomBase" {
+		t.Errorf("expected %s", baseName1)
+	}
+	baseName2 := ctrlObj.GetStructureNameCached(1000000000002, char)
+	if baseName2 != "ShadowSystem - ShadowBase" {
+		t.Errorf("expected %s", baseName1)
+	}
+	var dummy model.DBMiningData
+	dummy.OwnerCorpID = 12
+	ctrlObj.Model.AddMiningDataEntry(&dummy)
+	// TODO fix getmining data for non-corp members!
+	list = ctrlObj.Model.GetExtMiningData(char.CharInfoExt.CooperationId, 1000000000001)
+	if len(list) != 2 {
+		t.Errorf("TODO fix getmining data for non-corp members! expected 2 elements got %d", len(list))
+	}
+	list = ctrlObj.Model.GetCorpMiningData(char.CharInfoExt.CooperationId)
+	if len(list) != 7 {
+		t.Errorf("expected 4 elements got %d", len(list))
+	}
+	if list[0].TypeID != 17452 {
+		t.Logf("hint! add unkown people")
+	}
+	if list[1].CharacterID != 2115417359 {
+		t.Error("unexpected CharacterID")
+	}
+	if list[2].Quantity != 5000 {
+		t.Error("unexpected Quantity")
+	}
+	if list[3].RecordedCorporationID != 98627127 {
+		t.Error("unexpected RecordedCorporationID")
+	}
+	if list[3].OwnerCorpID != char.CharInfoExt.CooperationId {
+		t.Error("unexpected RecordedCorporationID")
+	}
+	testTypeId := 1228
+	typeStr := ctrlObj.Model.GetTypeString(testTypeId)
+	if typeStr != "Scordite" {
+		t.Error("unexpected type string")
+	}
+	if props := ctrlObj.Model.GetSdePropsByID(testTypeId); props != nil {
+		if len(props.Materials) != 2 {
+			t.Fatalf("expected two materials for scordite")
+		}
+		okCnt := 0
+		for _, contMat := range props.Materials {
+			if contMat.MaterialTypeID == 34 { // tritanium
+				if contMat.Quantity != 150 {
+					t.Fatalf("expected 150 tritanium in scordite")
+				}
+				contMatValue, ok := ctrlObj.Model.ItemAvgPrice[contMat.MaterialTypeID]
+				if !ok {
+					t.Fatalf("cannot find tritanium")
+				}
+				if contMatValue == 0 {
+					t.Fatalf("tritanium price empty")
+				}
+				okCnt++
+			}
+			if contMat.MaterialTypeID == 35 { // Pyerite
+				if contMat.Quantity != 90 {
+					t.Fatalf("expected 90 Pyerite in scordite")
+				}
+				contMatValue, ok := ctrlObj.Model.ItemAvgPrice[contMat.MaterialTypeID]
+				if !ok {
+					t.Fatalf("cannot find Pyerite")
+				}
+				if contMatValue == 0 {
+					t.Fatalf("Pyerite price empty")
+				}
+				okCnt++
+			}
+		}
+		if okCnt != 2 {
+			t.Fatalf("could not find expected materials")
+		}
+	} else {
+		t.Fatalf("props not found for scordite")
+	}
+
+	testAmount := 1000
+	testVolume := float64(testAmount) * 0.15
+	testValue, err := ctrlObj.GetOreValueByM3(testTypeId, testVolume)
+	if err != nil {
+		t.Errorf("unexepected error %s", err.Error())
+	} else {
+		if int(testValue) != 15042 {
+			t.Errorf("Unexpected value %3.2f", testValue)
+		}
+	}
+
 }

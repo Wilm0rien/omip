@@ -462,29 +462,55 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 				}
 			}
 		})
-
+	lastUpdateTime := time.Now()
+	updateRunning := false
+	filterDelayFunc := func() {
+		lastUpdateTime = time.Now()
+		if !updateRunning {
+			updateRunning = true
+			go func() {
+				// wait for no change for at least 2s
+				for {
+					if time.Since(lastUpdateTime).Milliseconds() > 500 {
+						updateLists()
+						updateRunning = false
+						break
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}()
+		}
+	}
 	filterRefTypes = widget.NewEntry()
 	filterRefTypes.PlaceHolder = "filter ref types"
 	filterRefTypes.OnChanged = func(s string) {
-		updateLists()
+		filterDelayFunc()
+		char.GuiSettings.Jour.FilterRefTypes = s
 	}
+	filterRefTypes.SetText(char.GuiSettings.Jour.FilterRefTypes)
 	filterDate = widget.NewEntry()
 	filterDate.PlaceHolder = "filter date"
 	filterDate.OnChanged = func(s string) {
-		updateLists()
+		filterDelayFunc()
+		char.GuiSettings.Jour.FilterDate = s
 	}
+	filterDate.SetText(char.GuiSettings.Jour.FilterDate)
 	filterPeriod = widget.NewSelect(
 		[]string{PERIOD_THIS_MONTH, PERIOD_LAST_MONTH, PERIOD_LAST_7_DAYS, PERIOD_LAST_30_DAYS, PERIOD_LAST_60_DAYS,
 			PERIOD_LAST_90_DAYS, PERIOD_THIS_YEAR}, func(s string) {
-			updateLists()
+			filterDelayFunc()
 			obj.Ctrl.Esi.NVConfig.PeriodFilter = s
+			char.GuiSettings.Jour.FilterPeriod = s
 		})
+	obj.Ctrl.Esi.NVConfig.PeriodFilter = char.GuiSettings.Jour.FilterPeriod
 
 	filterAmount = widget.NewEntry()
 	filterAmount.PlaceHolder = "filter amount millions"
 	filterAmount.OnChanged = func(s string) {
-		updateLists()
+		filterDelayFunc()
+		char.GuiSettings.Jour.FilterAmount = s
 	}
+	filterAmount.SetText(char.GuiSettings.Jour.FilterAmount)
 
 	resetFilterBtn := widget.NewButton("Reset Filters", func() {
 		filterRefTypes.SetText("")
@@ -494,7 +520,7 @@ func (obj *OmipGui) createJournalTab(char *ctrl.EsiChar, corp bool) (retTable fy
 	filterSign = widget.NewSelect(
 		[]string{FILTER_SIGN_ALL, FILTER_SIGN_PLUS, FILTER_SIGN_MINUS}, func(s string) {
 			signFilterStr = s
-			updateLists()
+			filterDelayFunc()
 		})
 	sumLabel := widget.NewLabel("Sum:")
 

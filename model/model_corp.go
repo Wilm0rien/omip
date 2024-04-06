@@ -32,6 +32,15 @@ type DBcorpMember struct {
 	Updated bool
 }
 
+type DBCorpNames struct {
+	CorpID     int
+	AllyID     int
+	CorpName   string
+	CorpTicker string
+	AllyName   string
+	AllyTicker string
+}
+
 func (obj *Model) createCorpMemberTable() {
 	if !obj.checkTableExists("corp_members") {
 		_, err := obj.DB.Exec(`
@@ -137,6 +146,24 @@ func (obj *Model) GetCorpTicker(corpID int) string {
 	return retval
 }
 
+func (obj *Model) GetCorpNames(corpID int) *DBCorpNames {
+	var retval DBCorpNames
+	info, result := obj.GetCorpInfoEntry(corpID)
+	if result == DBR_Success {
+		retval.CorpTicker, _ = obj.GetStringEntry(info.TickerStrRef)
+		retval.CorpName, _ = obj.GetStringEntry(info.CorpNameStrRef)
+		retval.AllyID = info.AllianceId
+		retval.CorpID = corpID
+		if ally, result2 := obj.GetAllyInfoEntry(info.AllianceId); result2 == DBR_Success {
+			retval.AllyName, _ = obj.GetStringEntry(ally.NameStrRef)
+			retval.AllyTicker, _ = obj.GetStringEntry(ally.TickerStrRef)
+		}
+	} else {
+		return nil
+	}
+	return &retval
+}
+
 func (obj *Model) AddCorpInfoEntry(corpInfo *DBcorpInfo) DBresult {
 	whereClause := fmt.Sprintf(`corporation_id="%d"`, corpInfo.CorpID)
 	num := obj.getNumEntries("corp_info", whereClause)
@@ -185,7 +212,34 @@ func (obj *Model) AddCorpInfoEntry(corpInfo *DBcorpInfo) DBresult {
 			retval = DBR_Inserted
 		}
 	} else {
-		retval = DBR_Skipped
+		stmt, err := obj.DB.Prepare(`
+		UPDATE "corp_info" SET
+			alliance_id=?,
+		    ceo_id=?,
+		    description=?,
+		    faction_id=?,
+		    home_station_id=?,
+		    member_count=?,
+		    tax_rate=?,
+		    url=?
+			WHERE corporation_id=?;`)
+		util.CheckErr(err)
+		res, err := stmt.Exec(
+			corpInfo.AllianceId,
+			corpInfo.CeoId,
+			corpInfo.DescriptionStrRef,
+			corpInfo.FactionId,
+			corpInfo.HomeStationId,
+			corpInfo.MemberCount,
+			corpInfo.TaxRate,
+			corpInfo.UrlStrRef, corpInfo.CorpID)
+		util.CheckErr(err)
+		defer stmt.Close()
+		affect, err := res.RowsAffected()
+		util.CheckErr(err)
+		if affect > 0 {
+			retval = DBR_Updated
+		}
 	}
 	return retval
 }

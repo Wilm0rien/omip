@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/Wilm0rien/omip/model"
 	"github.com/Wilm0rien/omip/util"
+	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -17,6 +19,9 @@ const (
 	TstCfgJson     = "TestCtrlMain.json"
 )
 
+type ReqMockFuncT func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response)
+
+var TestMockReq ReqMockFuncT
 var CtrlTestEnable bool
 
 type AuthCallBack func(newChar *EsiChar)
@@ -82,7 +87,9 @@ const (
 )
 
 func (obj *Ctrl) populateUpdateFuncList() {
-	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders", "Mails"}
+	// TODO auto connect JobList with UpdateFuncList!
+	// TODO fix CRASH if you do not update both lists!
+	obj.Up.JobList = []string{"Contracts", "ContractItems", "Industry", "KillMails", "Wallet", "CorpMembers", "Structures", "Notifications", "Transaction", "Orders", "Mails", "Mining"}
 	obj.Up.UpdateFuncList = make([]UpdateFunc, 0, 5)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContracts)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateContractItems)
@@ -95,7 +102,7 @@ func (obj *Ctrl) populateUpdateFuncList() {
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateTransaction)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateOrders)
 	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateMailLabels)
-
+	obj.Up.UpdateFuncList = append(obj.Up.UpdateFuncList, obj.UpdateCorpMiningObs)
 }
 
 func (obj *Ctrl) UpdateChar(char *EsiChar) {
@@ -136,7 +143,7 @@ func (obj EsiFileError) Error() (result string) {
 }
 
 func (obj *Ctrl) Save(cfgFileName string, testEnable bool) (retval error) {
-	data, err := json.Marshal(obj.Esi)
+	data, err := json.MarshalIndent(obj.Esi, "", "\t")
 	if testEnable {
 		cfgFileName = TstCfgJson
 	}
@@ -158,6 +165,12 @@ func (obj *Ctrl) Save(cfgFileName string, testEnable bool) (retval error) {
 			f.Close()
 			return
 		}
+		if testEnable {
+			authDataUnenc := obj.Model.LocalDir + "/" + cfgFileName + ".clear"
+			f2, _ := os.Create(authDataUnenc)
+			f2.WriteString(string(data))
+			log.Printf("writing clear json to %s", authDataUnenc)
+		}
 	}
 	return retval
 }
@@ -165,6 +178,9 @@ func (obj *Ctrl) Save(cfgFileName string, testEnable bool) (retval error) {
 func (obj *Ctrl) Load(cfgFileName string, testEnable bool) (retval error) {
 	if testEnable {
 		cfgFileName = TstCfgJson
+		CtrlTestEnable = true
+		response := obj.GetRequestMock()
+		HttpRequestMock = response
 	}
 
 	authData := obj.Model.LocalDir + "/" + cfgFileName
@@ -274,6 +290,7 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 	if len(obj.Esi.EsiCharList) > 0 {
 		obj.UpdateMarket(obj.Esi.EsiCharList[0], false)
 	}
+	var lastChar *EsiChar
 	for _, char := range obj.Esi.EsiCharList {
 		obj.UpdateWallet(char, false)
 		if char.AuthValid == AUTH_STATUS_INVALID {
@@ -297,10 +314,19 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 		if updateProg != nil {
 			updateProg(float64(itemCount) / float64(totalItems))
 		}
+
 	}
+
 	for _, corp := range obj.Esi.EsiCorpList {
 		director := obj.GetCorpDirector(corp.CooperationId)
 		if director != nil {
+			if director.AuthValid == AUTH_STATUS_INVALID {
+				msg := fmt.Sprintf("%s %s", corp.Name, fmt.Sprintf("skipping invalid auth %s", director.CharInfoData.CharacterName))
+				obj.AddLogEntry(msg)
+				obj.UpdateGuiStatus1(msg)
+				continue
+			}
+			lastChar = director
 			for idx, updateFunc := range obj.Up.UpdateFuncList {
 				obj.UpdateGuiStatus1(fmt.Sprintf("%s %s", corp.Name, obj.Up.JobList[idx]))
 				updateFunc(director, true)
@@ -318,6 +344,9 @@ func (obj *Ctrl) UpdateAllDataCmd(updateProg func(c float64), finishCb func()) {
 				}
 			}
 		}
+	}
+	if lastChar != nil {
+		obj.UpdateMiningMeta(lastChar, true)
 	}
 	if finishCb != nil {
 		finishCb()

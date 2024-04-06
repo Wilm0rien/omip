@@ -11,9 +11,30 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"runtime/debug"
+	"strconv"
 	"syscall"
 	"time"
 )
+
+type SdeTypeMatsStruct struct {
+	MaterialTypeID int `json:"MaterialTypeID"`
+	Quantity       int `json:"Quantity"`
+}
+
+type SdeTypeProps struct {
+	Volume    string               `json:"volume"`
+	Materials []*SdeTypeMatsStruct `json:"materials"`
+}
+
+type SdeTypeMatsList map[int]SdeTypeProps
+
+func (obj *SdeTypeProps) GetVolume() (result float64) {
+	if s, err := strconv.ParseFloat(obj.Volume, 64); err == nil {
+		result = s
+	}
+	return
+}
 
 type Model struct {
 	LocalDir        string
@@ -26,8 +47,11 @@ type Model struct {
 	LogObj          *log.Logger
 	LogFileHandle   *os.File
 	ItemIDs         map[int]string
+	ItemNames       map[string]int
 	ItemAvgPrice    map[int]float64
+	ItemMats        SdeTypeMatsList
 	DebugFlag       bool
+	corpNameMap     map[int]*DBCorpNames
 }
 
 const (
@@ -53,12 +77,16 @@ const (
 	DBR_Skipped
 )
 
-func NewModel(ldbName string, testEnable bool) *Model {
+func NewModel(ldbName string, testEnable bool, debug bool) *Model {
 	var obj Model
+	obj.corpNameMap = make(map[int]*DBCorpNames)
 	lLogFileName := LogFileName
 	if testEnable {
 		lLogFileName = LogFileNameTest
 		ldbName = DbNameCtrlTest
+		if debug {
+			ldbName = "omipCtrlTest_copy3.db"
+		}
 	}
 	appData := util.GetAppDataDir()
 	obj.LocalDir = appData + "/" + AppName
@@ -90,13 +118,22 @@ func NewModel(ldbName string, testEnable bool) *Model {
 
 	obj.ItemIDs = make(map[int]string)
 	obj.ItemAvgPrice = make(map[int]float64)
+	obj.ItemNames = make(map[string]int)
 
 	fileBytes := []byte(SdeData)
 	errJson := json.Unmarshal(fileBytes, &obj.ItemIDs)
 	if errJson != nil {
 		obj.LogObj.Printf("ERROR typeIds %s", errJson.Error())
 	}
+	file2bytes := []byte(SdeTypeMats)
+	errJson = json.Unmarshal(file2bytes, &obj.ItemMats)
+	if errJson != nil {
+		obj.LogObj.Printf("ERROR typemats %s", errJson.Error())
+	}
 
+	for key, value := range obj.ItemIDs {
+		obj.ItemNames[value] = key
+	}
 	if !util.Exists(obj.LocalSqlDb) {
 		obj.createNewDb(obj.LocalSqlDb)
 	} else {
@@ -120,6 +157,7 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	obj.createContractTable()
 	obj.createOrderTable()
 	obj.createCorpMemberTable()
+	obj.createAllyInfoTable()
 	obj.createCorpInfoTable()
 	obj.createInduTable()
 	obj.createJournalTable()
@@ -134,7 +172,8 @@ func NewModel(ldbName string, testEnable bool) *Model {
 	obj.createNotificationTable()
 	obj.createPriceTable()
 	obj.createTransactionsTable()
-
+	obj.createMiningObserverTable()
+	obj.createMiningDataTable()
 	mItems := obj.GetMarketItems()
 	for _, item := range mItems {
 		obj.ItemAvgPrice[item.TypeId] = item.AveragePrice
@@ -179,6 +218,31 @@ func (obj *Model) GetTypeString(ID int) string {
 		}
 	}
 	return retval
+}
+
+func (obj *Model) GetItemID(itemName string) int {
+	var retval int
+	if obj.ItemNames != nil {
+		if val, ok := obj.ItemNames[itemName]; ok {
+			retval = val
+		}
+	}
+	return retval
+}
+
+func (obj *Model) GetSdePropsByID(ID int) (result *SdeTypeProps) {
+	if obj.ItemMats != nil {
+		if val, ok := obj.ItemMats[ID]; ok {
+			result = &val
+		}
+	}
+	return
+}
+func (obj *Model) GetSdePropsByName(name string) (result *SdeTypeProps) {
+	if id := obj.GetItemID(name); id != 0 {
+		result = obj.GetSdePropsByID(id)
+	}
+	return
 }
 
 func (obj *Model) GetMonthlyTable(corpId int, inputTable []*DBTable, maxMonth int) *MonthlyTable {
@@ -267,11 +331,20 @@ func (obj *Model) getNumEntries(tableName string, whereClause string) int {
 	queryString := fmt.Sprintf(`SELECT  COUNT(*)  from %s WHERE %s;`, tableName, whereClause)
 	rows, err := obj.DB.Query(queryString)
 	util.CheckErr(err)
-	defer rows.Close()
+	defer func() {
+		if rows != nil {
+			rows.Close()
+		} else {
+			log.Printf("cannot close rows %s", debug.Stack())
+		}
+	}()
 	num = 0
-	for rows.Next() {
-		rows.Scan(&num)
+	if rows != nil {
+		for rows.Next() {
+			rows.Scan(&num)
+		}
 	}
+
 	return num
 }
 

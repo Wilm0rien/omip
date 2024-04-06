@@ -280,6 +280,9 @@ func (obj *OmipGui) createIskLossTab(char *ctrl.EsiChar, corp bool) (retTable fy
 		if updateColumnWidth != nil {
 			updateColumnWidth()
 		}
+		if len(filteredCharList) == 0 {
+			filteredCharList = append(filteredCharList, "N/A")
+		}
 		tableObj.Refresh()
 	}
 	tableObj = widget.NewTable(

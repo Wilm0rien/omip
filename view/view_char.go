@@ -514,6 +514,7 @@ func (obj *OmipGui) CreateCharDebugTab(localchar *ctrl.EsiChar) fyne.CanvasObjec
 	mailButton := widget.NewButton("check mail", func() {
 		obj.Ctrl.UpdateMailLabels(localchar, false)
 	})
+
 	debugVbox := container.NewVBox(statusBtn, contractBtn, contractItemsBtn, indudstryBtn, journalBtn, orderBtn, transactionsBtn, killmailsBtn, walletBtn, notificationBtn, marketPriceBtn, directorBtn, mailButton)
 	return debugVbox
 }

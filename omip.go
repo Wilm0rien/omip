@@ -9,6 +9,7 @@ import (
 	"github.com/Wilm0rien/omip/util"
 	"github.com/Wilm0rien/omip/view"
 	"log"
+	"os"
 	"time"
 )
 
@@ -19,6 +20,7 @@ var guiEnableFlag = flag.Bool("gui", false, "enable gui (cmd mode)")
 var cmdEnableFlag = flag.Bool("cmd", false, "enable cmd")
 var dontWaitFlag = flag.Bool("no_pause", false, "do not wait for enterkey in console mode")
 var CmdLineOpt string
+var genJson = flag.Bool("genJson", false, "generate mining data")
 
 func main() {
 	flag.Parse()
@@ -28,13 +30,18 @@ func main() {
 	if *cmdEnableFlag {
 		CmdLineOpt = "default_cmd"
 	}
+
 	// kill existing instance
 	urlStrShutdown := fmt.Sprintf("http://localhost:4716/callback?code=shutdown&state=0")
 	if util.SendReq(urlStrShutdown) {
 		time.Sleep(400 * time.Millisecond)
 	}
-	modelObj := model.NewModel(model.DbName, *testEnableFlag)
+	modelObj := model.NewModel(model.DbName, *testEnableFlag, *debugEnableFlag)
 	ctrlObj := ctrl.NewCtrl(modelObj)
+	if *genJson {
+		ctrlObj.GenerateMiningData()
+		os.Exit(0)
+	}
 	ctrlObj.StartServer()
 	loadErr := ctrlObj.Load(ctrl.ConfigFileName, *testEnableFlag)
 	if CmdLineOpt == "default_cmd" {

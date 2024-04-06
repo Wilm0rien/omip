@@ -39,6 +39,7 @@ type UpdateFlags struct {
 	Structures   bool
 	Wallet       bool
 	MailLabels   bool
+	Mining       bool
 }
 
 type EsiData struct {
@@ -48,6 +49,26 @@ type EsiData struct {
 	NVConfig     NVConfigData
 	ETags        map[string]string // map[url]=etag
 	CacheEntries map[string]int64  // map[url]=future cache expire unix time stamp
+}
+
+type GuiSettings struct {
+	Jour       JournalSettings
+	CorpMining CorpMiningSettings
+}
+
+type JournalSettings struct {
+	FilterPeriod   string
+	FilterAmount   string
+	FilterRefTypes string
+	FilterDate     string
+}
+
+type CorpMiningSettings struct {
+	CharName       string
+	FilterAmount   string
+	SelType        string
+	Percentage     float64
+	GroupSelection string
 }
 
 type EsiChar struct {
@@ -61,6 +82,7 @@ type EsiChar struct {
 	UpdateFlags       UpdateFlags
 	KmSkipList        map[int32]bool // map[KillmailID]bool
 	AuthValid         AuthValid
+	GuiSettings       GuiSettings
 }
 type EsiCorp struct {
 	Name          string
@@ -113,7 +135,7 @@ const (
 )
 
 const (
-	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1"
+	scopes   = "publicData esi-mail.read_mail.v1 esi-wallet.read_character_wallet.v1 esi-universe.read_structures.v1 esi-killmails.read_killmails.v1 esi-corporations.read_corporation_membership.v1 esi-corporations.read_structures.v1 esi-industry.read_character_jobs.v1 esi-markets.read_character_orders.v1 esi-characters.read_corporation_roles.v1 esi-contracts.read_character_contracts.v1 esi-killmails.read_corporation_killmails.v1 esi-wallet.read_corporation_wallets.v1 esi-characters.read_notifications.v1 esi-contracts.read_corporation_contracts.v1 esi-industry.read_corporation_jobs.v1 esi-markets.read_corporation_orders.v1 esi-industry.read_corporation_mining.v1"
 	clientID = "41b2d654515d40b5a04e727a334c6358"
 	callBack = "http://localhost:4716/callback"
 	// id ranges https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb
@@ -341,6 +363,7 @@ func (obj *Ctrl) setUpdateFlags(char *EsiChar) {
 	char.UpdateFlags.Structures = true
 	char.UpdateFlags.Wallet = true
 	char.UpdateFlags.MailLabels = true
+	char.UpdateFlags.Mining = true
 }
 
 func (obj *Ctrl) corpExists(char *EsiChar) bool {
@@ -356,8 +379,8 @@ func (obj *Ctrl) corpExists(char *EsiChar) bool {
 
 func (obj *Ctrl) CheckIfDirector(char *EsiChar) bool {
 	var retval bool
-	url := fmt.Sprintf("https://esi.evetech.net/v2/corporations/%d/roles/?datasource=tranquility", char.CharInfoExt.CooperationId)
-	bodyBytes, _, _ := obj.getSecuredUrl(url, char)
+	url2 := fmt.Sprintf("https://esi.evetech.net/v2/corporations/%d/roles/?datasource=tranquility", char.CharInfoExt.CooperationId)
+	bodyBytes, _, _ := obj.getSecuredUrl(url2, char)
 	if bodyBytes != nil {
 		retval = true
 	}
@@ -622,6 +645,9 @@ func (obj *Ctrl) getSecuredUrlPost(url string, body string, char *EsiChar) (body
 	if len(char.RefreshAuthData.AccessToken) == 0 {
 		obj.AddLogEntry("no initial auth saved")
 	} else {
+		if CtrlTestEnable {
+			HttpPostDataMock = body
+		}
 		req, err1 := http.NewRequest("POST", url, bytes.NewBufferString(body))
 		if err1 != nil {
 			obj.AddLogEntry(err1.Error())
@@ -641,8 +667,6 @@ func (obj *Ctrl) getSecuredUrlPost(url string, body string, char *EsiChar) (body
 	}
 	return bodyBytes, resp
 }
-
-var HttpRequestMock func(req *http.Request) (bodyBytes []byte, err error, resp *http.Response)
 
 func (obj *Ctrl) httpClientRequest(req *http.Request) (bodyBytes []byte, err error, resp *http.Response) {
 	if !CtrlTestEnable {

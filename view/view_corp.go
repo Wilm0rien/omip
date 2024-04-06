@@ -170,6 +170,22 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	walletBtn := widget.NewButton("Wallet", func() {
 		obj.Ctrl.UpdateWallet(director, true)
 	})
+	running := false
+	miningBt := widget.NewButton("Mining", func() {
+		if running == false {
+			running = true
+			go func() {
+				obj.Ctrl.UpdateCorpMiningObs(director, true)
+				running = false
+			}()
+		} else {
+			obj.Ctrl.GuiStatusCB("still running", 1)
+		}
+
+	})
+	metaButton := widget.NewButton("update Mining Meta", func() {
+		obj.Ctrl.UpdateMiningMeta(director, false)
+	})
 	/** TODO remove paps
 	papBtn := widget.NewButton("Paps", func() {
 		if aDash, ok := obj.Ctrl.ADash[director.CharInfoExt.CooperationId]; ok {
@@ -188,7 +204,8 @@ func (obj *OmipGui) CreateCorpDebugTab(director *ctrl.EsiChar, corp *ctrl.EsiCor
 	})
 	box := container.NewVBox(
 		contractBtn, contractItemsBtn, indudstryBtn, journalBtn, orderBtn, transactionsBtn,
-		killmailsBtn, killmailsBtnLastMotn, structureBtn, walletBtn, membersBtn, crashbutton)
+		killmailsBtn, killmailsBtnLastMotn, structureBtn, walletBtn, membersBtn, crashbutton,
+		miningBt, metaButton)
 	/** TODO remove paps
 	if IsImperium(corp.AllianceId) {
 		box.Objects = append(box.Objects, papBtn)
@@ -288,7 +305,11 @@ func (obj *OmipGui) CreateCorpGui(corp *ctrl.EsiCorp, director *ctrl.EsiChar, is
 		obj.assignRefButton("Journal", refButtonlist, corpSubTabs, len(corpSubTabs.Items))
 		corpSubTabs.Append(jourTab)
 	}
-
+	miningTabObj, miningTabNeeded := obj.createMiningTab(director, true)
+	if miningTabNeeded {
+		miningTab := container.NewTabItem("Mining", miningTabObj)
+		corpSubTabs.Append(miningTab)
+	}
 	// TODO remove workaround for https://github.com/fyne-io/fyne/issues/3169
 	corpSubTabs.OnSelected = func(item *container.TabItem) {
 		obj.recurseRefresh(item)
