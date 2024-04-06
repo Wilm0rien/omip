@@ -300,7 +300,7 @@ func (obj *Ctrl) GenerateMiningData() {
 	list := make([]*MiningData, 0, 100)
 	for month := int32(1); month <= 12; month++ {
 		for day := int32(1); day <= 28; day++ {
-			num := 10 + rand.Intn(100)
+			num := 10 + rand.Intn(10)
 			filterMap := make(map[int]map[int]*MiningData)
 
 			for i := 0; i < num; i++ {
@@ -309,7 +309,7 @@ func (obj *Ctrl) GenerateMiningData() {
 				var newRandObvj MiningData
 				newRandObvj.CharacterID = charIDs[randomChar]
 				newRandObvj.LastUpdated = fmt.Sprintf("2024-%02d-%02d", month, day)
-				newRandObvj.Quantity = int32(1 + rand.Intn(100000))
+				newRandObvj.Quantity = int32(1 + rand.Intn(1000))
 				newRandObvj.RecordedCorpId = 98627127
 				randOre := rand.Intn(3)
 				randSubOre := rand.Intn(3)
