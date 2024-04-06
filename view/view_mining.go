@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -272,7 +273,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	if len(origMiningData) == 0 {
 		return nil, false
 	}
-
+	var updateListLock sync.Mutex
 	var fullListOre *model.MonthlyTable
 	var fullListIsk *model.MonthlyTable
 	corpAllyMap := make(map[int]map[int]string)
@@ -282,7 +283,8 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	rebuildMTable := func() {
 		normalizedListOre := make([]*model.DBTable, 0, 100)
 		normalizedListIsk := make([]*model.DBTable, 0, 100)
-
+		updateListLock.Lock()
+		defer updateListLock.Unlock()
 		for _, elem := range origMiningData {
 			var new_monthlyOre model.DBTable
 			combinedMain := ""
@@ -344,7 +346,6 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		fullListOre = obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListOre, maxMonth)
 		fullListIsk = obj.Ctrl.Model.GetMonthlyTable(char.CharInfoExt.CooperationId, normalizedListIsk, maxMonth)
 	}
-	rebuildMTable()
 
 	var tableObj *widget.Table
 	var filterCharName *widget.Entry
@@ -353,17 +354,13 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	var updateColumnWidth func()
 	var filteredList model.MonthlyTable
 
-	if len(fullListOre.ValCharPerMon) == 0 {
-		return retTable, result
-	} else {
-		result = true
-	}
-
 	filteredCharList := make([]string, 0, 10)
 
 	fullList := fullListOre
 	filterReverse := false
 	updateLists := func() {
+		updateListLock.Lock()
+		defer updateListLock.Unlock()
 		switch typeSelectionStr {
 		case "ORE":
 			fullList = fullListOre
@@ -661,8 +658,6 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	}
 	filterAmount.SetText(char.GuiSettings.CorpMining.FilterAmount)
 
-	updateLists()
-
 	updateColumnWidth = func() {
 		leadingWidth := float32(300)
 		tableObj.SetColumnWidth(0, leadingWidth)
@@ -685,12 +680,58 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 	percentageEntry := widget.NewEntry()
 	percentageEntry.SetPlaceHolder("Percentage")
+	csvBtn := widget.NewButton("copy CSV", func() {
+
+		var list []*model.ViewMiningData
+		endTime := time.Now().Unix()
+		maxSeconds := int64(maxMonth * 30 * 24 * 60 * 60)
+		startTime := endTime - maxSeconds
+		for _, charName := range filteredCharList {
+			charList := obj.Ctrl.Model.GetMiningFiltered(char.CharInfoExt.CooperationId, nameMapping[charName], startTime, endTime)
+			if len(charList) == 0 {
+				charList = obj.Ctrl.Model.GetMiningFilteredExt(nameMapping[charName], startTime, endTime)
+			}
+			list = append(list, charList...)
+		}
+		miningDT := NewMDT(obj.Ctrl)
+		for _, elem := range list {
+			var newElem miningDetail
+			newElem.altName = elem.AltName
+			newElem.obsName = obj.Ctrl.GetStructureNameCached(elem.ObserverID, obj.Ctrl.Esi.EsiCharList[0])
+			newElem.dateStr = util.ConvertUnixTimeToDateStr(elem.LastUpdated)
+			newElem.oreType = obj.Ctrl.Model.GetTypeString(elem.TypeID)
+			newElem.oreAmount = elem.Quantity
+			var volume float64
+			if props := obj.Ctrl.Model.GetSdePropsByID(elem.TypeID); props != nil {
+				volume = props.GetVolume()
+			}
+			newElem.oreVolume = int((float64)(elem.Quantity) * volume)
+			if oreIskValue, err := obj.Ctrl.GetOreValueByAmount(elem.TypeID, elem.Quantity); err == nil {
+				newElem.iskValue = oreIskValue
+			} else {
+				newElem.iskValue = 0
+			}
+
+			miningDT.fulllist = append(miningDT.fulllist, &newElem)
+		}
+		miningDT.UpdateLists()
+		var outString string
+		for iRow := 0; iRow < miningDT.GetNumRows(); iRow++ {
+			for jCol := 0; jCol < miningDT.GetNumCols(); jCol++ {
+				outString += fmt.Sprintf("%s\t", miningDT.GetCSVCellStr(iRow, jCol))
+			}
+			outString += "\n"
+		}
+		//obj.Ctrl.Model.LogObj.Printf("%s", outString)
+		util.ClipboardPaste(outString)
+	})
 	percentageBtn := widget.NewButton("Update %", func() {
 		if percentageEntry.Text == "" {
-			d := dialog.NewError(errors.New(fmt.Sprintf("percentage must be between 0..100 %s", filterAmount.Text)), obj.WindowPtr)
-			d.Show()
+			char.GuiSettings.CorpMining.Percentage = 0
+			updateLists()
 			return
 		}
+
 		if s, err := strconv.ParseFloat(percentageEntry.Text, 64); err == nil {
 			if s >= 0 && s <= 100 {
 				char.GuiSettings.CorpMining.Percentage = s
@@ -707,7 +748,7 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 	if char.GuiSettings.CorpMining.Percentage != 0 {
 		percentageEntry.SetText(fmt.Sprintf("%f", char.GuiSettings.CorpMining.Percentage))
 	}
-	percentageGrid := container.NewGridWithColumns(2, percentageEntry, percentageBtn)
+	percentageGrid := container.NewBorder(nil, nil, nil, percentageBtn, percentageEntry)
 	showHidePerc := func(s string) {
 		switch s {
 		case "ORE":
@@ -739,6 +780,8 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 
 		bottomRowTable.Refresh()
 	})
+	rebuildMTable()
+	updateLists()
 
 	if char.GuiSettings.CorpMining.SelType != "" {
 		typeSelectionStr = char.GuiSettings.CorpMining.SelType
@@ -755,8 +798,25 @@ func (obj *OmipGui) createMiningTab(char *ctrl.EsiChar, corp bool) (retTable fyn
 		groupSelectionStr = GROUP_SEL_CHAR
 		groupSelect.SetSelected(groupSelectionStr)
 	}
+
+	updateLists()
+	rebuildMTable()
+
+	if len(fullListOre.ValCharPerMon) == 0 {
+		return retTable, result
+	} else {
+		result = true
+	}
+	resetFilter := widget.NewButton("Reset Filter", func() {
+		filterCharName.SetText("")
+		filterAmount.SetText("")
+	})
 	showHidePerc(char.GuiSettings.CorpMining.SelType)
-	filtergrid := container.New(layout.NewGridLayout(6), filterCharName, filterAmount, typeSelect, percentageGrid, groupSelect, hintLabel)
+	box := container.NewBorder(nil, nil, container.NewHBox(typeSelect, csvBtn, resetFilter), nil, groupSelect)
+
+	filterbox := container.New(layout.NewGridLayout(2), filterCharName, filterAmount)
+	filtergrid := container.New(layout.NewGridLayout(3), filterbox, box,
+		container.New(layout.NewGridLayout(2), percentageGrid, hintLabel))
 	bottomGrid := container.New(layout.NewGridLayout(1), bottomRowTable, filtergrid)
 	topGrid2 := container.New(layout.NewGridLayout(1), topRowTable)
 	mainbox := container.NewBorder(topGrid2, bottomGrid, nil, nil, tableObj)
