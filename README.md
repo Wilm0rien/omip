@@ -195,12 +195,12 @@ OMIP - An Eve Online Data Aggregator
 
 * All mining activities from all corporation structures from the past 12 month are listed in the mining tracker overview <36>
 * the character names in <36> are prefixed with alliance ticker and corporation ticker and can be filtered with the filter entry <37>
-* in "Group by Char" <38> view mode if the characters belong your own corporation the alt mapping is used to sum up all alts under the main character name
+* in "Group by Char" <38> view mode if the characters belongs to your own corporation the alt mapping is used to sum up all alts under the main character name
 * with filter millions <39> only those table entries which have more than the given million value are listed. if you want to filter with less than millions you can set a floating point number like 0.1 to filter out all entries which have less than 100k
 * the ISK/ORE selection <40> allows to switch between ISK and ore values. the Ore values are in volume (m3) and the ISK values are calculated in the same way as https://www.fuzzwork.co.uk/ore/ by reading the latest marked values for the minerals contained inside the ores
 * if you click on a cell inside the table (for example <44>) the mining detail for this cell is listed in a separate window. in this way you see the structure name and what has been mined.
 * if you click the copy CSV button <41> you get all the details mentioned for <44> copied into the clipboard for all data visible in the overview (filters apply)
-* if you want to tax full coperations/alliances rather than single players you can set the selection field <38> to corporation and alliance view. this will summarize all characters from that corp/ally in the over view and detail table underneath.
+* if you want to tax full corporations/alliances rather than single players you can set the selection field <38> to corporation and alliance view. this will summarize all characters from that corp/ally in the over view and detail table underneath.
 * if you want to see only a percentage of the full value for taxing purposes you can set a percentage value in field 43 and click the update % button to apply the change. you may also use floating point values like 1.3 here. 
 
 
