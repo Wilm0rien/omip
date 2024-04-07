@@ -190,7 +190,8 @@ OMIP - An Eve Online Data Aggregator
 
 ## Moon Mining tracker
 
-<img width="1176" alt="image" src="https://github.com/Wilm0rien/omip/assets/20628481/3f8e980c-2ee6-43c2-8677-ef9cc10a1626">
+<img width="1175" alt="image" src="https://github.com/Wilm0rien/omip/assets/20628481/ea1cd28d-f081-4464-b6e2-9c73abf2b2f7">
+
 
 * All mining activities from all corporation structures from the past 12 month are listed in the mining tracker overview <36>
 * the character names in <36> are prefixed with alliance ticker and corporation ticker and can be filtered with the filter entry <37>
