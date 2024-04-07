@@ -176,7 +176,8 @@ OMIP - An Eve Online Data Aggregator
 
 ## ESI Keys
 
-![image](https://user-images.githubusercontent.com/20628481/190903249-17f7c078-3223-44e2-85c4-a50df4dbadaf.png)
+<img width="875" alt="image" src="https://github.com/Wilm0rien/omip/assets/20628481/17b54771-afed-445c-8eed-c634b55a9e73">
+
 
 * the "ESI Keys" tab <32> shows the list of registered characters
 * unchecking a checkbox <33> for a character  will exclude this data from being refreshed on update <3>
@@ -186,6 +187,21 @@ OMIP - An Eve Online Data Aggregator
   * this will not delete the data stored for this character in the database
   * if you delete the last director of a corporation this corporation will not be visible anymore in the corporations tab
 * when ever you close the tool <35> all your settings are saved 
+
+## Moon Mining tracker
+
+<img width="1176" alt="image" src="https://github.com/Wilm0rien/omip/assets/20628481/3f8e980c-2ee6-43c2-8677-ef9cc10a1626">
+
+* All mining activities from all corporation structures from the past 12 month are listed in the mining tracker overview <36>
+* the character names in <36> are prefixed with alliance ticker and corporation ticker and can be filtered with the filter entry <37>
+* in "Group by Char" <38> view mode if the characters belong your own corporation the alt mapping is used to sum up all alts under the main character name
+* with filter millions <39> only those table entries which have more than the given million value are listed. if you want to filter with less than millions you can set a floating point number like 0.1 to filter out all entries which have less than 100k
+* the ISK/ORE selection <40> allows to switch between ISK and ore values. the Ore values are in volume (m3) and the ISK values are calculated in the same way as https://www.fuzzwork.co.uk/ore/ by reading the latest marked values for the minerals contained inside the ores
+* if you click on a cell inside the table (for example <44>) the mining detail for this cell is listed in a separate window. in this way you see the structure name and what has been mined.
+* if you click the copy CSV button <41> you get all the details mentioned for <44> copied into the clipboard for all data visible in the overview (filters apply)
+* if you want to tax full coperations/alliances rather than single players you can set the selection field <38> to corporation and alliance view. this will summarize all characters from that corp/ally in the over view and detail table underneath.
+* if you want to see only a percentage of the full value for taxing purposes you can set a percentage value in field 43 and click the update % button to apply the change. you may also use floating point values like 1.3 here. 
+
 
 # COPYRIGHT NOTICE
 EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to OMIP to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, OMIP. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.
